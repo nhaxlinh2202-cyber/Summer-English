@@ -242,6 +242,44 @@ const OrangeCatPet: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Teacher Mode: Reset Buttons */}
+          {state.isTeacherMode && (
+            <div style={{ width: '100%', display: 'flex', gap: '8px' }}>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => updateHunger(65)}
+                style={{
+                  flex: 1, padding: '8px 6px',
+                  background: 'linear-gradient(135deg, #fff0e0, #ffe5c8)',
+                  border: '1.5px solid #fdba74',
+                  borderRadius: '12px', cursor: 'pointer',
+                  fontSize: '0.73rem', fontWeight: 800, color: '#c2410c',
+                  fontFamily: 'Nunito, sans-serif',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                }}
+              >
+                🍔 Reset no bụng
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setHappiness(50)}
+                style={{
+                  flex: 1, padding: '8px 6px',
+                  background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+                  border: '1.5px solid #86efac',
+                  borderRadius: '12px', cursor: 'pointer',
+                  fontSize: '0.73rem', fontWeight: 800, color: '#15803d',
+                  fontFamily: 'Nunito, sans-serif',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
+                }}
+              >
+                💖 Reset vui vẻ
+              </motion.button>
+            </div>
+          )}
         </div>
 
         {/* ═══ RIGHT: Info Cards ═══ */}
