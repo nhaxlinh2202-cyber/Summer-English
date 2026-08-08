@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Fish, Hand, Sparkles, Award, Heart, Star, Lock } from 'lucide-react';
+import { Fish, Sparkles, Award, Star, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppContext, computeHeroMood, type HeroMood } from '../context/AppContext';
+import { useAppContext, computeHeroMood } from '../context/AppContext';
 import OrangeCatIcon from './OrangeCatIcon';
 
 const SKINS = [
@@ -94,18 +94,6 @@ const OrangeCatPet: React.FC = () => {
 
   const completedTests = state.tests.filter(t => t.status === 'completed');
   const latestTest = completedTests.length > 0 ? completedTests[completedTests.length - 1] : null;
-
-  const moodText = {
-    crying: latestTest
-      ? `Bài "${latestTest.name}" bé đạt ${latestTest.score} điểm. Cố lên nhé! 💪`
-      : 'Hãy hoàn thành bài kiểm tra để Mèo Cam vui nào! 🙏',
-    victory: latestTest
-      ? `Xuất sắc! "${latestTest.name}" đạt ${latestTest.score} điểm! Mèo Cam tự hào! 🎉`
-      : 'Bé học giỏi quá! Mèo Cam rất vui! 🎊',
-    happy: latestTest
-      ? `Tốt lắm! "${latestTest.name}" đạt ${latestTest.score} điểm! Tiếp tục nhé!`
-      : 'Mèo Cam sẵn sàng học Tiếng Anh cùng bé! 📚',
-  };
 
   const feedDisabled = state.fish <= 0 || state.catHunger >= 100;
 
