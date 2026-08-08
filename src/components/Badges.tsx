@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Plus, X, Trash2, Edit3, Check, Award, Sparkles, Camera, Upload, Download } from 'lucide-react';
+import { Plus, X, Trash2, Edit3, Check, Award, Sparkles, Camera, Upload, Download, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import { useAppContext } from '../context/AppContext';
 import { translations } from '../translations';
+import ReportPDFModal from './ReportPDFModal';
 
 // Vector Flower Mascot Component with Student Photo centered in 8 Large Vivid Petals
 const BeNgoanFlower: React.FC<{ size?: number; photoUrl?: string }> = ({ size = 160, photoUrl = '/student_photo.png' }) => {
@@ -75,6 +76,7 @@ const Badges: React.FC = () => {
   const t = translations[lang];
 
   const [showForm, setShowForm] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   
@@ -112,6 +114,27 @@ const Badges: React.FC = () => {
       alert('Không thể xuất hình ảnh. Vui lòng thử lại!');
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  // Export Single Badge Image Function
+  const handleDownloadSingleBadgeImage = async (badgeId: string) => {
+    const cardElement = document.getElementById(`badge-card-${badgeId}`);
+    if (!cardElement) return;
+    try {
+      const canvas = await html2canvas(cardElement, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 3,
+        backgroundColor: '#ffffff',
+      });
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `Phieu_Be_Ngoan_${state.profile.studentName || 'Student'}_${badgeId}.png`;
+      link.click();
+    } catch (err) {
+      alert('Không thể xuất hình ảnh phiếu. Vui lòng thử lại!');
     }
   };
 
@@ -265,6 +288,28 @@ const Badges: React.FC = () => {
             <span>{isExporting ? t.downloadingBoardBtn : t.downloadBoardBtn}</span>
           </motion.button>
 
+          {/* Export PDF Report Button */}
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn" 
+            onClick={() => setShowPdfModal(true)} 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)', 
+              color: 'white',
+              fontSize: '0.95rem',
+              fontWeight: 'bold',
+              padding: '12px 18px',
+              boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)'
+            }}
+          >
+            <FileText size={18} />
+            <span>{t.exportPdfBtn}</span>
+          </motion.button>
+
           {state.isTeacherMode && (
             <motion.button 
               whileHover={{ scale: 1.05 }}
@@ -339,21 +384,18 @@ const Badges: React.FC = () => {
             return (
               <motion.div
                 key={badge.id}
+                id={`badge-card-${badge.id}`}
                 whileHover={{ scale: 1.06, rotate: 0, zIndex: 10 }}
                 transition={{ duration: 0.2 }}
                 style={{
                   width: cardDim.width,
-                  backgroundColor: '#fdfaf5',
-                  background: `
-                    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, rgba(253, 247, 235, 0.95) 100%),
-                    repeating-linear-gradient(45deg, rgba(210, 190, 150, 0.09) 0px, rgba(210, 190, 150, 0.09) 1px, transparent 1px, transparent 4px),
-                    repeating-linear-gradient(-45deg, rgba(210, 190, 150, 0.09) 0px, rgba(210, 190, 150, 0.09) 1px, transparent 1px, transparent 4px)
-                  `,
+                  backgroundColor: '#ffffff',
+                  background: '#ffffff',
                   borderRadius: '14px',
                   padding: '14px 10px 10px 10px',
                   textAlign: 'center',
                   position: 'relative',
-                  boxShadow: '0 8px 22px rgba(0, 0, 0, 0.25), inset 0 0 30px rgba(235, 218, 190, 0.45)',
+                  boxShadow: '0 8px 22px rgba(0, 0, 0, 0.18)',
                   transform: `rotate(${rotationAngle}deg)`,
                   // Double Magenta Line Border matching authentic paper certificate
                   border: '2.5px solid #d81b60',
@@ -380,6 +422,30 @@ const Badges: React.FC = () => {
                   boxShadow: '0 3px 6px rgba(0,0,0,0.35)',
                   zIndex: 6
                 }} />
+
+                {/* Single Card Download Button */}
+                <span 
+                  title={t.downloadSingleCardBtn}
+                  onClick={(e) => { e.stopPropagation(); handleDownloadSingleBadgeImage(badge.id); }}
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    background: '#ecfdf5',
+                    border: '1px solid #6ee7b7',
+                    borderRadius: '50%',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#059669',
+                    zIndex: 8,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Download size={12} />
+                </span>
 
                 {/* Delete Button */}
                 {state.isTeacherMode && (
@@ -635,6 +701,9 @@ const Badges: React.FC = () => {
         </AnimatePresence>,
         document.body
       )}
+
+      {/* PDF Summary Report Modal */}
+      <ReportPDFModal isOpen={showPdfModal} onClose={() => setShowPdfModal(false)} />
     </div>
   );
 };

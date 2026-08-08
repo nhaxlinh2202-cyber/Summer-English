@@ -55,6 +55,21 @@ export const translations = {
     issueModalPin: 'Tạo & Dán Lên Bảng',
     deleteConfirm: 'Bạn có chắc chắn muốn xóa phiếu bé ngoan này không?',
 
+    // PDF Export & Badges
+    downloadSingleCardBtn: 'Tải Ảnh Phiếu Này (PNG)',
+    exportPdfBtn: 'Xuất PDF Báo Cáo',
+    exportingPdfBtn: 'Đang Tạo PDF...',
+    pdfReportTitle: 'BÁO CÁO TỔNG KẾT KẾT QUẢ VÀ TIẾN ĐỘ HỌC TẬP',
+    pdfStudentInfo: 'Thông Tin Học Sinh',
+    pdfOverviewStats: 'Thống Kê Tổng Quan',
+    pdfLessonProgress: 'Bảng Tiến Độ Học Tập (12 Buổi)',
+    pdfTestHistory: 'Lịch Sử Bài Kiểm Tra',
+    pdfBadgesSummary: 'Danh Sách Phiếu Bé Ngoan',
+    pdfFeedbacks: 'Nhận Xét & Đánh Giá',
+    pdfSignatures: 'Xác Nhận Ký Tên',
+    pdfTeacherSign: 'Chữ ký Giáo Viên',
+    pdfParentSign: 'Chữ ký Phụ Huynh',
+
     // Language Toggle
     langSwitch: 'Ngôn Ngữ',
     resetProgressBtn: 'Reset Tiến Độ',
@@ -113,6 +128,21 @@ export const translations = {
     issueModalNote: 'Reward Note (Black Text Line):',
     issueModalPin: 'Issue & Pin to Board',
     deleteConfirm: 'Are you sure you want to delete this certificate?',
+
+    // PDF Export & Badges
+    downloadSingleCardBtn: 'Download Single Card (PNG)',
+    exportPdfBtn: 'Export PDF Report',
+    exportingPdfBtn: 'Generating PDF...',
+    pdfReportTitle: 'SUMMARY REPORT OF LEARNING RESULTS AND PROGRESS',
+    pdfStudentInfo: 'Student Information',
+    pdfOverviewStats: 'Performance Overview',
+    pdfLessonProgress: 'Lesson Progress Tracker (12 Lessons)',
+    pdfTestHistory: 'Test History & Scores',
+    pdfBadgesSummary: 'Certificates & Rewards',
+    pdfFeedbacks: 'Teacher & Parent Comments',
+    pdfSignatures: 'Signatures & Verification',
+    pdfTeacherSign: 'Teacher Signature',
+    pdfParentSign: 'Parent Signature',
 
     // Language Toggle
     langSwitch: 'Language',

@@ -1,13 +1,15 @@
-import React from 'react';
-import { Star, Award, CheckCircle, RotateCcw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, Award, CheckCircle, RotateCcw, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppContext } from '../context/AppContext';
 import { translations } from '../translations';
+import ReportPDFModal from './ReportPDFModal';
 
 const Dashboard: React.FC = () => {
   const { state, resetProgress } = useAppContext();
   const lang = state.language || 'vi';
   const t = translations[lang];
+  const [showPdfModal, setShowPdfModal] = useState(false);
   
   const totalLessons = 12;
   const completedCount = state.completedLessons.length;
@@ -71,8 +73,33 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '1px', opacity: 0.8, color: '#0c2461' }}>
-          {t.teacherName}: {state.profile.teacherName}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+          <div style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '1px', opacity: 0.8, color: '#0c2461' }}>
+            {t.teacherName}: {state.profile.teacherName}
+          </div>
+          
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowPdfModal(true)}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              padding: '8px 16px', 
+              borderRadius: '999px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.35)'
+            }}
+          >
+            <FileText size={16} />
+            <span>{t.exportPdfBtn}</span>
+          </motion.button>
         </div>
       </motion.div>
 
@@ -108,30 +135,55 @@ const Dashboard: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <h2 style={{ margin: 0 }}>{t.summerTrack}</h2>
           
-          {state.isTeacherMode && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleReset}
+              onClick={() => setShowPdfModal(true)}
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '6px', 
                 padding: '6px 14px', 
                 borderRadius: '999px',
-                border: '1.5px solid #fca5a5',
-                background: '#fef2f2',
-                color: '#ef4444',
+                border: 'none',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                color: 'white',
                 fontWeight: 'bold',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(239, 68, 68, 0.15)'
+                boxShadow: '0 2px 6px rgba(16, 185, 129, 0.25)'
               }}
             >
-              <RotateCcw size={15} />
-              <span>{t.resetProgressBtn}</span>
+              <FileText size={15} />
+              <span>{t.exportPdfBtn}</span>
             </motion.button>
-          )}
+
+            {state.isTeacherMode && (
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleReset}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  padding: '6px 14px', 
+                  borderRadius: '999px',
+                  border: '1.5px solid #fca5a5',
+                  background: '#fef2f2',
+                  color: '#ef4444',
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(239, 68, 68, 0.15)'
+                }}
+              >
+                <RotateCcw size={15} />
+                <span>{t.resetProgressBtn}</span>
+              </motion.button>
+            )}
+          </div>
         </div>
         <div className="progress-bar-container" style={{ background: '#eee', borderRadius: '999px', height: '32px', overflow: 'hidden', position: 'relative' }}>
           <motion.div 
@@ -157,6 +209,9 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* PDF Summary Report Modal */}
+      <ReportPDFModal isOpen={showPdfModal} onClose={() => setShowPdfModal(false)} />
     </div>
   );
 };
