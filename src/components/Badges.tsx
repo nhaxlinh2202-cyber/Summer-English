@@ -104,6 +104,7 @@ const Badges: React.FC = () => {
         allowTaint: true,
         scale: 2,
         backgroundColor: '#5c3818',
+        ignoreElements: (el) => el.getAttribute('data-html2canvas-ignore') === 'true',
       });
       const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
@@ -127,6 +128,7 @@ const Badges: React.FC = () => {
         allowTaint: true,
         scale: 3,
         backgroundColor: '#ffffff',
+        ignoreElements: (el) => el.getAttribute('data-html2canvas-ignore') === 'true',
       });
       const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
@@ -425,6 +427,7 @@ const Badges: React.FC = () => {
 
                 {/* Single Card Download Button */}
                 <span 
+                  data-html2canvas-ignore="true"
                   title={t.downloadSingleCardBtn}
                   onClick={(e) => { e.stopPropagation(); handleDownloadSingleBadgeImage(badge.id); }}
                   style={{
@@ -450,6 +453,7 @@ const Badges: React.FC = () => {
                 {/* Delete Button */}
                 {state.isTeacherMode && (
                   <span 
+                    data-html2canvas-ignore="true"
                     title="Delete this certificate"
                     onClick={(e) => { e.stopPropagation(); handleDelete(badge.id); }}
                     style={{
@@ -525,6 +529,7 @@ const Badges: React.FC = () => {
                         }}
                       />
                       <button 
+                        data-html2canvas-ignore="true"
                         onClick={() => saveDescription(badge.id)} 
                         className="btn" 
                         style={{ padding: '6px 8px', background: '#d81b60', color: 'white', display: 'flex', alignItems: 'center' }}
@@ -555,7 +560,7 @@ const Badges: React.FC = () => {
                     >
                       <span>{badge.description || t.defaultRewardDesc}</span>
                       {state.isTeacherMode && (
-                        <Edit3 size={12} color="#880e4f" style={{ opacity: 0.7 }} />
+                        <Edit3 data-html2canvas-ignore="true" size={12} color="#880e4f" style={{ opacity: 0.7 }} />
                       )}
                     </div>
                   )}
