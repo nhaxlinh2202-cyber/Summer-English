@@ -91,11 +91,14 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
     day: 'numeric'
   });
 
+  // Smart Page-Break Algorithm: Prevents slicing through cards, sections, or rows!
   const handleDownloadPDF = async () => {
     if (!reportRef.current) return;
     setIsGenerating(true);
     try {
       const element = reportRef.current;
+
+      // Render entire element to high resolution canvas
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -104,25 +107,80 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
         logging: false
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
 
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      const domWidth = element.offsetWidth;
+      const scale = canvas.width / domWidth;
+      const pageCanvasHeight = (canvas.width * pdfHeight) / pdfWidth;
 
-      let heightLeft = imgHeight;
-      let position = 0;
+      // Find all indivisible items (sections, cards, lesson items, table rows, headers)
+      const breakableNodes = Array.from(
+        element.querySelectorAll('.pdf-section, .pdf-card, .pdf-item, tr, h3, h1')
+      ) as HTMLElement[];
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
+      const containerRect = element.getBoundingClientRect();
+      const elementRects = breakableNodes.map(node => {
+        const rect = node.getBoundingClientRect();
+        const elemTop = (rect.top - containerRect.top) * scale;
+        const elemBottom = elemTop + rect.height * scale;
+        return { top: elemTop, bottom: elemBottom };
+      }).filter(r => r.bottom > r.top).sort((a, b) => a.top - b.top);
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+      // Compute smart page break positions in canvas pixels
+      const pageBreaks: number[] = [0];
+      let currentY = 0;
+
+      while (currentY < canvas.height - 10) {
+        let nextBreak = currentY + pageCanvasHeight;
+
+        if (nextBreak >= canvas.height) {
+          pageBreaks.push(canvas.height);
+          break;
+        }
+
+        // Check if nextBreak cuts through any indivisible element
+        const straddling = elementRects.find(r => r.top < nextBreak && r.bottom > nextBreak);
+        if (straddling && straddling.top > currentY + 100) {
+          // Move the page break UP to the top of the element so it doesn't get sliced!
+          nextBreak = straddling.top;
+        }
+
+        pageBreaks.push(nextBreak);
+        currentY = nextBreak;
+      }
+
+      // Render each page slice onto PDF without slicing elements
+      for (let i = 0; i < pageBreaks.length - 1; i++) {
+        const sliceTop = pageBreaks[i];
+        const sliceHeight = pageBreaks[i + 1] - sliceTop;
+
+        if (sliceHeight <= 0) continue;
+
+        if (i > 0) {
+          pdf.addPage();
+        }
+
+        // Create temporary canvas for this page slice
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sliceHeight;
+
+        const ctx = pageCanvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(
+            canvas,
+            0, sliceTop, canvas.width, sliceHeight,
+            0, 0, canvas.width, sliceHeight
+          );
+
+          const imgData = pageCanvas.toDataURL('image/png');
+          const sliceMmHeight = (sliceHeight * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(sliceMmHeight, pdfHeight));
+        }
       }
 
       pdf.save(`Bang_Tong_Ket_Hoc_Tap_${state.profile.studentName || 'Student'}.pdf`);
@@ -410,7 +468,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Section 1: Student & Teacher Profile */}
-              <div style={{
+              <div className="pdf-section" style={{
                 background: '#f1f5f9',
                 borderRadius: '14px',
                 padding: '16px 20px',
@@ -431,7 +489,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Section 2: Key Stats Overview */}
-              <div style={{ marginBottom: '24px' }}>
+              <div className="pdf-section" style={{ marginBottom: '24px' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Sparkles size={17} color="#eab308" /> {t.pdfOverviewStats}
                 </h3>
@@ -463,7 +521,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Section 3: Test History */}
-              <div style={{ marginBottom: '24px' }}>
+              <div className="pdf-section" style={{ marginBottom: '24px' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <GraduationCap size={17} color="#4f46e5" /> {t.pdfTestHistory}
                 </h3>
@@ -500,7 +558,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Section 4: Detailed Lesson & Activities Breakdown (Selected Lessons ONLY) */}
-              <div style={{ marginBottom: '24px' }}>
+              <div className="pdf-section" style={{ marginBottom: '24px' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <BookOpen size={17} color="#059669" /> Chi Tiết Hoạt Động Báo Cáo ({lessonsToExport.length} Buổi Được Chọn)
                 </h3>
@@ -522,6 +580,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                       return (
                         <div
                           key={lesson.id}
+                          className="pdf-item"
                           style={{
                             background: isLessonDone ? '#ecfdf5' : '#f0f9ff',
                             border: `1.5px solid ${isLessonDone ? '#a7f3d0' : '#bae6fd'}`,
@@ -595,7 +654,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Section 5: Badges / Visual Certificates Cards */}
-              <div style={{ marginBottom: '24px' }}>
+              <div className="pdf-section" style={{ marginBottom: '24px' }}>
                 <h3 style={{ margin: '0 0 12px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Award size={17} color="#d81b60" /> {t.pdfBadgesSummary} ({state.badges.length} Phiếu)
                 </h3>
@@ -609,6 +668,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                     {state.badges.map((badge) => (
                       <div
                         key={badge.id}
+                        className="pdf-card"
                         style={{
                           width: '160px',
                           minHeight: '235px',
@@ -701,13 +761,13 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
 
               {/* Section 6: Feedbacks */}
               {state.feedbacks && state.feedbacks.length > 0 && (
-                <div style={{ marginBottom: '24px' }}>
+                <div className="pdf-section" style={{ marginBottom: '24px' }}>
                   <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800 }}>
                     💬 {t.pdfFeedbacks}
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {state.feedbacks.slice(0, 3).map(fb => (
-                      <div key={fb.id} style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '10px', padding: '8px 12px', fontSize: '0.82rem' }}>
+                      <div key={fb.id} className="pdf-item" style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '10px', padding: '8px 12px', fontSize: '0.82rem' }}>
                         <span style={{ marginRight: '8px' }}>{fb.emoji}</span>
                         <strong>{fb.lessonTitle}:</strong> {fb.note}
                         <span style={{ float: 'right', color: '#8c8c8c', fontSize: '0.75rem' }}>{fb.date}</span>
@@ -718,7 +778,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               )}
 
               {/* Section 7: Official Sign-off Footer */}
-              <div style={{
+              <div className="pdf-section" style={{
                 marginTop: '36px',
                 paddingTop: '16px',
                 borderTop: '2px dashed #cbd5e1',
