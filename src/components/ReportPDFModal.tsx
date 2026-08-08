@@ -373,6 +373,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                   {state.curriculum.flatMap(w => w.lessons).map((lesson, idx) => {
                     const isLessonDone = state.completedLessons.includes(lesson.id);
                     const doneStages = state.completedStages[lesson.id] || (isLessonDone ? [0, 1, 2, 3] : []);
+                    const hasProgress = isLessonDone || doneStages.length > 0;
                     const staticWords = lesson.words || [];
                     const customWordsForLesson = state.customWords.filter(w => w.lessonId === lesson.id);
                     const allLessonWords = [...staticWords, ...customWordsForLesson];
@@ -381,18 +382,18 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                       <div
                         key={lesson.id}
                         style={{
-                          background: isLessonDone ? '#ecfdf5' : '#f8fafc',
-                          border: `1.5px solid ${isLessonDone ? '#a7f3d0' : '#e2e8f0'}`,
+                          background: isLessonDone ? '#ecfdf5' : hasProgress ? '#f0f9ff' : '#f8fafc',
+                          border: `1.5px solid ${isLessonDone ? '#a7f3d0' : hasProgress ? '#bae6fd' : '#e2e8f0'}`,
                           borderRadius: '12px',
-                          padding: '12px 14px',
+                          padding: '10px 14px',
                           fontSize: '0.82rem'
                         }}
                       >
                         {/* Lesson Header Line */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: hasProgress ? '8px' : '0' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <CheckCircle2 size={18} color={isLessonDone ? '#059669' : '#94a3b8'} />
-                            <span style={{ fontWeight: 800, fontSize: '0.92rem', color: isLessonDone ? '#065f46' : '#334155' }}>
+                            <CheckCircle2 size={18} color={isLessonDone ? '#059669' : hasProgress ? '#0284c7' : '#cbd5e1'} />
+                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: isLessonDone ? '#065f46' : hasProgress ? '#0369a1' : '#64748b' }}>
                               Buổi {idx + 1}: {lesson.title}
                             </span>
                           </div>
@@ -401,53 +402,58 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                             borderRadius: '12px',
                             fontSize: '0.75rem',
                             fontWeight: 'bold',
-                            background: isLessonDone ? '#d1fae5' : '#f1f5f9',
-                            color: isLessonDone ? '#047857' : '#64748b'
+                            background: isLessonDone ? '#d1fae5' : hasProgress ? '#e0f2fe' : '#f1f5f9',
+                            color: isLessonDone ? '#047857' : hasProgress ? '#0369a1' : '#94a3b8'
                           }}>
-                            {isLessonDone ? `✓ Hoàn thành (${doneStages.length}/${lesson.stages.length} chặng)` : `Đang học (${doneStages.length}/${lesson.stages.length} chặng)`}
+                            {isLessonDone ? `✓ Hoàn thành (${doneStages.length}/${lesson.stages.length} chặng)` : hasProgress ? `Đang học (${doneStages.length}/${lesson.stages.length} chặng)` : `⚪ Chưa học`}
                           </span>
                         </div>
 
-                        {/* Stages Breakdown */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '6px', background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                          {lesson.stages.map((stage, stageIdx) => {
-                            const isStageDone = isLessonDone || doneStages.includes(stageIdx);
-                            return (
-                              <div key={stageIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: isStageDone ? '#0f766e' : '#64748b' }}>
-                                <span style={{ color: isStageDone ? '#059669' : '#cbd5e1', fontWeight: 'bold' }}>
-                                  {isStageDone ? '☑' : '▫'}
-                                </span>
-                                <div>
-                                  <strong style={{ color: isStageDone ? '#0f766e' : '#475569' }}>{stage.name}:</strong> {stage.desc}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        {/* Stages & Vocabulary Breakdown ONLY when lesson has progress */}
+                        {hasProgress && (
+                          <>
+                            {/* Stages Breakdown */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '6px', background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                              {lesson.stages.map((stage, stageIdx) => {
+                                const isStageDone = isLessonDone || doneStages.includes(stageIdx);
+                                return (
+                                  <div key={stageIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: isStageDone ? '#0f766e' : '#64748b' }}>
+                                    <span style={{ color: isStageDone ? '#059669' : '#cbd5e1', fontWeight: 'bold' }}>
+                                      {isStageDone ? '☑' : '▫'}
+                                    </span>
+                                    <div>
+                                      <strong style={{ color: isStageDone ? '#0f766e' : '#475569' }}>{stage.name}:</strong> {stage.desc}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
 
-                        {/* Vocabulary Words (Static + Custom Added Words) */}
-                        {allLessonWords.length > 0 && (
-                          <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <strong style={{ color: '#2563eb' }}>🔤 Từ vựng ({allLessonWords.length}):</strong>
-                            {allLessonWords.map((w, wIdx) => {
-                              const isCustom = 'id' in w && !staticWords.some(sw => sw.en === w.en);
-                              return (
-                                <span 
-                                  key={wIdx} 
-                                  style={{ 
-                                    background: isCustom ? '#fef3c7' : '#eff6ff', 
-                                    border: `1px solid ${isCustom ? '#fcd34d' : '#bfdbfe'}`, 
-                                    padding: '1px 6px', 
-                                    borderRadius: '6px', 
-                                    color: isCustom ? '#b45309' : '#1d4ed8',
-                                    fontWeight: isCustom ? 'bold' : 'normal'
-                                  }}
-                                >
-                                  <strong>{w.en}</strong> ({w.vi}){isCustom ? ' ✨' : ''}
-                                </span>
-                              );
-                            })}
-                          </div>
+                            {/* Vocabulary Words (Static + Custom Added Words) */}
+                            {allLessonWords.length > 0 && (
+                              <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <strong style={{ color: '#2563eb' }}>🔤 Từ vựng ({allLessonWords.length}):</strong>
+                                {allLessonWords.map((w, wIdx) => {
+                                  const isCustom = 'id' in w && !staticWords.some(sw => sw.en === w.en);
+                                  return (
+                                    <span 
+                                      key={wIdx} 
+                                      style={{ 
+                                        background: isCustom ? '#fef3c7' : '#eff6ff', 
+                                        border: `1px solid ${isCustom ? '#fcd34d' : '#bfdbfe'}`, 
+                                        padding: '1px 6px', 
+                                        borderRadius: '6px', 
+                                        color: isCustom ? '#b45309' : '#1d4ed8',
+                                        fontWeight: isCustom ? 'bold' : 'normal'
+                                      }}
+                                    >
+                                      <strong>{w.en}</strong> ({w.vi}){isCustom ? ' ✨' : ''}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     );
