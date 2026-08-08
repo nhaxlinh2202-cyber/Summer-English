@@ -290,6 +290,7 @@ function App() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
               className="glass-panel p-6" 
               style={{ width: '520px', maxWidth: '92vw', background: 'white', maxHeight: '90vh', overflowY: 'auto', borderRadius: '24px' }}
             >
