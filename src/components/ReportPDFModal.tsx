@@ -12,6 +12,43 @@ interface ReportPDFModalProps {
   onClose: () => void;
 }
 
+// Vector Flower Mascot Component for PDF Export Cards
+const BeNgoanFlowerPDF: React.FC<{ size?: number; photoUrl?: string }> = ({ size = 85, photoUrl = '/student_photo.png' }) => {
+  const petals = [
+    { angle: 0, color: '#e91e63' },
+    { angle: 45, color: '#fdd835' },
+    { angle: 90, color: '#1976d2' },
+    { angle: 135, color: '#c2185b' },
+    { angle: 180, color: '#fdd835' },
+    { angle: 225, color: '#388e3c' },
+    { angle: 270, color: '#1976d2' },
+    { angle: 315, color: '#e91e63' },
+  ];
+
+  return (
+    <svg width={size} height={size * 1.1} viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="pdfFlowerFaceClip">
+          <circle cx="100" cy="90" r="35" />
+        </clipPath>
+      </defs>
+      <path d="M 100 122 L 100 195" stroke="#2e7d32" strokeWidth="8" strokeLinecap="round" />
+      <path d="M 100 160 C 65 150 45 135 40 145 C 50 165 80 165 100 165 Z" fill="#43a047" stroke="#1b5e20" strokeWidth="2" />
+      <path d="M 100 170 C 135 160 155 145 160 155 C 150 175 120 175 100 175 Z" fill="#43a047" stroke="#1b5e20" strokeWidth="2" />
+      <g>
+        {petals.map((p, idx) => (
+          <g key={idx} transform={`translate(100, 90) rotate(${p.angle})`}>
+            <ellipse cx="0" cy="-42" rx="18" ry="26" fill={p.color} stroke="#222222" strokeWidth="2.5" />
+          </g>
+        ))}
+      </g>
+      <circle cx="100" cy="90" r="35" fill="#ffffff" stroke="#222222" strokeWidth="3" />
+      <image href={photoUrl} x="58" y="44" width="84" height="84" preserveAspectRatio="xMidYMid slice" clipPath="url(#pdfFlowerFaceClip)" />
+      <circle cx="100" cy="90" r="35" fill="none" stroke="#222222" strokeWidth="3" />
+    </svg>
+  );
+};
+
 const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
   const { state } = useAppContext();
   const lang = state.language || 'vi';
@@ -186,7 +223,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               style={{
                 width: '794px',
                 margin: '0 auto',
-                padding: '40px',
+                padding: '36px',
                 background: '#ffffff',
                 color: '#1e293b',
                 fontFamily: '"Nunito", "Be Vietnam Pro", system-ui, sans-serif',
@@ -200,54 +237,54 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                paddingBottom: '20px',
+                paddingBottom: '16px',
                 borderBottom: '3px solid #3b82f6',
-                marginBottom: '24px'
+                marginBottom: '20px'
               }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563eb', fontWeight: 900, fontSize: '1.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563eb', fontWeight: 900, fontSize: '1.35rem' }}>
                     <span>☀️ SUMMER ENGLISH</span>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '2px' }}>
                     Chương Trình Học Tiếng Anh Mùa Hè Dành Cho Bé
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold' }}>NGÀY XUẤT BÁO CÁO</div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>{todayStr}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 'bold' }}>NGÀY XUẤT BÁO CÁO</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>{todayStr}</div>
                 </div>
               </div>
 
               {/* Report Main Title */}
-              <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                 <h1 style={{
-                  fontSize: '1.75rem',
+                  fontSize: '1.6rem',
                   fontWeight: 900,
                   color: '#1e3a8a',
-                  margin: '0 0 6px 0',
+                  margin: '0 0 4px 0',
                   letterSpacing: '0.5px',
                   textTransform: 'uppercase'
                 }}>
                   {t.pdfReportTitle}
                 </h1>
-                <div style={{ fontSize: '0.9rem', color: '#475569', fontStyle: 'italic' }}>
-                  Tổng hợp thành tích, điểm số kiểm tra và tiến độ hoàn thành khóa học
+                <div style={{ fontSize: '0.85rem', color: '#475569', fontStyle: 'italic' }}>
+                  Tổng hợp thành tích, chi tiết hoạt động học tập và ảnh phiếu bé ngoan
                 </div>
               </div>
 
               {/* Section 1: Student & Teacher Profile */}
               <div style={{
                 background: '#f1f5f9',
-                borderRadius: '16px',
-                padding: '20px',
-                marginBottom: '24px',
+                borderRadius: '14px',
+                padding: '16px 20px',
+                marginBottom: '20px',
                 border: '1.5px solid #cbd5e1'
               }}>
-                <h3 style={{ margin: '0 0 14px 0', color: '#1e3a8a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <User size={18} color="#2563eb" /> {t.pdfStudentInfo}
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <User size={17} color="#2563eb" /> {t.pdfStudentInfo}
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: '0.92rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', fontSize: '0.88rem' }}>
                   <div><strong>Tên Học Sinh:</strong> <span style={{ color: '#2563eb', fontWeight: 800 }}>{state.profile.studentName || 'Bé Ngoan'}</span></div>
                   <div><strong>Lớp / Tuổi:</strong> {state.profile.studentClass || 'Lớp 3A'}</div>
                   <div><strong>Giáo Viên Hướng Dẫn:</strong> {state.profile.teacherName || 'Cô Giáo'}</div>
@@ -258,30 +295,30 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Section 2: Key Stats Overview */}
-              <div style={{ marginBottom: '28px' }}>
-                <h3 style={{ margin: '0 0 14px 0', color: '#1e3a8a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sparkles size={18} color="#eab308" /> {t.pdfOverviewStats}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={17} color="#eab308" /> {t.pdfOverviewStats}
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                   
-                  <div style={{ background: '#fef2f2', border: '1.5px solid #fca5a5', padding: '14px', borderRadius: '14px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#991b1b', fontWeight: 'bold' }}>TÍCH LŨY SAO / XP</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#dc2626', marginTop: '4px' }}>{state.stars} ⭐</div>
+                  <div style={{ background: '#fef2f2', border: '1.5px solid #fca5a5', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 'bold' }}>TÍCH LŨY SAO / XP</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#dc2626', marginTop: '2px' }}>{state.stars} ⭐</div>
                   </div>
 
-                  <div style={{ background: '#ecfdf5', border: '1.5px solid #6ee7b7', padding: '14px', borderRadius: '14px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#065f46', fontWeight: 'bold' }}>TIẾN ĐỘ BÀI HỌC</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669', marginTop: '4px' }}>{completedCount}/{totalLessons} ({progressPercent}%)</div>
+                  <div style={{ background: '#ecfdf5', border: '1.5px solid #6ee7b7', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#065f46', fontWeight: 'bold' }}>TIẾN ĐỘ BÀI HỌC</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#059669', marginTop: '2px' }}>{completedCount}/{totalLessons} ({progressPercent}%)</div>
                   </div>
 
-                  <div style={{ background: '#f0f9ff', border: '1.5px solid #7dd3fc', padding: '14px', borderRadius: '14px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#075985', fontWeight: 'bold' }}>CẤP ĐỘ MÈO CAM</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0284c7', marginTop: '4px' }}>Lv. {state.catLevel} 🐱</div>
+                  <div style={{ background: '#f0f9ff', border: '1.5px solid #7dd3fc', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#075985', fontWeight: 'bold' }}>CẤP ĐỘ MÈO CAM</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>Lv. {state.catLevel} 🐱</div>
                   </div>
 
-                  <div style={{ background: '#faf5ff', border: '1.5px solid #d8b4fe', padding: '14px', borderRadius: '14px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#6b21a8', fontWeight: 'bold' }}>ĐIỂM ĐÁNH GIÁ TB</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#9333ea', marginTop: '4px' }}>
+                  <div style={{ background: '#faf5ff', border: '1.5px solid #d8b4fe', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#6b21a8', fontWeight: 'bold' }}>ĐIỂM ĐÁNH GIÁ TB</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#9333ea', marginTop: '2px' }}>
                       {avgScore !== null ? `${avgScore}đ` : 'Chưa thi'}
                     </div>
                   </div>
@@ -290,33 +327,33 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               {/* Section 3: Test History */}
-              <div style={{ marginBottom: '28px' }}>
-                <h3 style={{ margin: '0 0 12px 0', color: '#1e3a8a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <GraduationCap size={18} color="#4f46e5" /> {t.pdfTestHistory}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <GraduationCap size={17} color="#4f46e5" /> {t.pdfTestHistory}
                 </h3>
                 {completedTests.length === 0 ? (
-                  <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.9rem', color: '#64748b' }}>
+                  <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.85rem', color: '#64748b' }}>
                     Chưa có bài kiểm tra nào được hoàn thành.
                   </div>
                 ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                     <thead>
                       <tr style={{ background: '#e0e7ff', color: '#3730a3', textAlign: 'left' }}>
-                        <th style={{ padding: '10px 12px', borderRadius: '8px 0 0 8px' }}>Tên Bài Kiểm Tra</th>
-                        <th style={{ padding: '10px 12px' }}>Ngày Làm Bài</th>
-                        <th style={{ padding: '10px 12px' }}>Điểm Số</th>
-                        <th style={{ padding: '10px 12px', borderRadius: '0 8px 8px 0' }}>Đánh Giá</th>
+                        <th style={{ padding: '8px 10px', borderRadius: '6px 0 0 6px' }}>Tên Bài Kiểm Tra</th>
+                        <th style={{ padding: '8px 10px' }}>Ngày Làm Bài</th>
+                        <th style={{ padding: '8px 10px' }}>Điểm Số</th>
+                        <th style={{ padding: '8px 10px', borderRadius: '0 6px 6px 0' }}>Đánh Giá</th>
                       </tr>
                     </thead>
                     <tbody>
                       {completedTests.map((test, idx) => (
                         <tr key={test.id} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          <td style={{ padding: '10px 12px', fontWeight: 'bold', color: '#1e293b' }}>{test.name}</td>
-                          <td style={{ padding: '10px 12px', color: '#64748b' }}>{test.date}</td>
-                          <td style={{ padding: '10px 12px', fontWeight: 900, color: test.score >= 90 ? '#059669' : test.score >= 60 ? '#2563eb' : '#dc2626' }}>
+                          <td style={{ padding: '8px 10px', fontWeight: 'bold', color: '#1e293b' }}>{test.name}</td>
+                          <td style={{ padding: '8px 10px', color: '#64748b' }}>{test.date}</td>
+                          <td style={{ padding: '8px 10px', fontWeight: 900, color: test.score >= 90 ? '#059669' : test.score >= 60 ? '#2563eb' : '#dc2626' }}>
                             {test.score} / 100
                           </td>
-                          <td style={{ padding: '10px 12px', fontWeight: 'bold' }}>
+                          <td style={{ padding: '8px 10px', fontWeight: 'bold' }}>
                             {test.score >= 90 ? '🏆 Xuất sắc' : test.score >= 60 ? '🌟 Đạt yêu cầu' : '⚠️ Cần cố gắng'}
                           </td>
                         </tr>
@@ -326,80 +363,196 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Section 4: Lesson Progress Breakdown */}
-              <div style={{ marginBottom: '28px' }}>
-                <h3 style={{ margin: '0 0 12px 0', color: '#1e3a8a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <BookOpen size={18} color="#059669" /> {t.pdfLessonProgress}
+              {/* Section 4: Detailed Lesson & Activities Breakdown */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <BookOpen size={17} color="#059669" /> Chi Tiết Hoạt Động & Tiến Độ 12 Buổi Học
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {state.curriculum.flatMap(w => w.lessons).map((lesson, idx) => {
-                    const isDone = state.completedLessons.includes(lesson.id);
+                    const isLessonDone = state.completedLessons.includes(lesson.id);
+                    const doneStages = state.completedStages[lesson.id] || (isLessonDone ? [0, 1, 2, 3] : []);
+
                     return (
                       <div
                         key={lesson.id}
                         style={{
-                          padding: '10px 12px',
-                          borderRadius: '10px',
-                          background: isDone ? '#ecfdf5' : '#f8fafc',
-                          border: `1px solid ${isDone ? '#a7f3d0' : '#e2e8f0'}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
+                          background: isLessonDone ? '#ecfdf5' : '#f8fafc',
+                          border: `1.5px solid ${isLessonDone ? '#a7f3d0' : '#e2e8f0'}`,
+                          borderRadius: '12px',
+                          padding: '12px 14px',
                           fontSize: '0.82rem'
                         }}
                       >
-                        <CheckCircle2 size={16} color={isDone ? '#059669' : '#cbd5e1'} />
-                        <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <span style={{ fontWeight: 'bold', color: isDone ? '#065f46' : '#64748b' }}>
-                            Buổi {idx + 1}:
-                          </span>{' '}
-                          <span style={{ color: isDone ? '#047857' : '#94a3b8' }}>{lesson.title}</span>
+                        {/* Lesson Header Line */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <CheckCircle2 size={18} color={isLessonDone ? '#059669' : '#94a3b8'} />
+                            <span style={{ fontWeight: 800, fontSize: '0.92rem', color: isLessonDone ? '#065f46' : '#334155' }}>
+                              Buổi {idx + 1}: {lesson.title}
+                            </span>
+                          </div>
+                          <span style={{
+                            padding: '3px 10px',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            background: isLessonDone ? '#d1fae5' : '#f1f5f9',
+                            color: isLessonDone ? '#047857' : '#64748b'
+                          }}>
+                            {isLessonDone ? `✓ Hoàn thành (${doneStages.length}/${lesson.stages.length} chặng)` : `Đang học (${doneStages.length}/${lesson.stages.length} chặng)`}
+                          </span>
                         </div>
+
+                        {/* Stages Breakdown */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '6px', background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          {lesson.stages.map((stage, stageIdx) => {
+                            const isStageDone = isLessonDone || doneStages.includes(stageIdx);
+                            return (
+                              <div key={stageIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: isStageDone ? '#0f766e' : '#64748b' }}>
+                                <span style={{ color: isStageDone ? '#059669' : '#cbd5e1', fontWeight: 'bold' }}>
+                                  {isStageDone ? '☑' : '▫'}
+                                </span>
+                                <div>
+                                  <strong style={{ color: isStageDone ? '#0f766e' : '#475569' }}>{stage.name}:</strong> {stage.desc}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Vocabulary Words */}
+                        {lesson.words && lesson.words.length > 0 && (
+                          <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <strong style={{ color: '#2563eb' }}>🔤 Từ vựng:</strong>
+                            {lesson.words.map((w, wIdx) => (
+                              <span key={wIdx} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '1px 6px', borderRadius: '6px', color: '#1d4ed8' }}>
+                                <strong>{w.en}</strong> ({w.vi})
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Section 5: Badges / Certificates */}
-              <div style={{ marginBottom: '28px' }}>
-                <h3 style={{ margin: '0 0 12px 0', color: '#1e3a8a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Award size={18} color="#d81b60" /> {t.pdfBadgesSummary} ({state.badges.length})
+              {/* Section 5: Badges / Visual Certificates Cards */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 12px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Award size={17} color="#d81b60" /> {t.pdfBadgesSummary} ({state.badges.length} Phiếu)
                 </h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                  {state.badges.map((b) => (
-                    <div
-                      key={b.id}
-                      style={{
-                        background: '#fdf2f8',
-                        border: '1px solid #fbcfe8',
-                        borderRadius: '12px',
-                        padding: '10px 14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      <span style={{ fontSize: '1.3rem' }}>🌸</span>
-                      <div>
-                        <div style={{ fontWeight: 'bold', color: '#be185d' }}>{b.description || t.defaultRewardDesc}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#9d174d' }}>Ngày trao: {b.date}</div>
+
+                {state.badges.length === 0 ? (
+                  <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.85rem', color: '#64748b' }}>
+                    Chưa có phiếu bé ngoan nào được trao.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>
+                    {state.badges.map((badge) => (
+                      <div
+                        key={badge.id}
+                        style={{
+                          width: '160px',
+                          minHeight: '235px',
+                          backgroundColor: '#ffffff',
+                          background: '#ffffff',
+                          borderRadius: '12px',
+                          padding: '10px 8px 8px 8px',
+                          textAlign: 'center',
+                          position: 'relative',
+                          border: '2px solid #d81b60',
+                          outline: '1.5px solid #ffffff',
+                          outlineOffset: '-5px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        {/* Red Push Pin */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          background: 'radial-gradient(circle at 35% 35%, #ff5252 0%, #b71c1c 100%)',
+                          border: '1px solid #ffffff',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                          zIndex: 6
+                        }} />
+
+                        {/* Title */}
+                        <h4 style={{ 
+                          margin: '2px 0 0 0', 
+                          color: '#c2185b', 
+                          fontSize: '0.82rem', 
+                          fontWeight: 900,
+                          letterSpacing: '0.2px',
+                          textTransform: 'uppercase'
+                        }}>
+                          {t.badgeCardTitle}
+                        </h4>
+
+                        {/* Student Photo Flower Mascot */}
+                        <div style={{ margin: '2px 0' }}>
+                          <BeNgoanFlowerPDF size={80} photoUrl={badge.photoUrl || '/student_photo.png'} />
+                        </div>
+
+                        {/* Student Name */}
+                        <div style={{ 
+                          color: '#c2185b', 
+                          fontSize: '1.05rem', 
+                          fontWeight: 'bold',
+                          fontFamily: '"Dancing Script", "Be Vietnam Pro", cursive, sans-serif',
+                          margin: '0 0 2px 0',
+                          lineHeight: 1.1
+                        }}>
+                          {state.profile.studentName || 'Bé Ngoan'}
+                        </div>
+
+                        {/* Note Line */}
+                        <div style={{
+                          border: '1px solid #d81b60',
+                          borderRadius: '4px',
+                          padding: '3px 4px',
+                          background: '#ffffff',
+                          color: '#111827',
+                          fontWeight: 800,
+                          fontSize: '0.7rem',
+                          textAlign: 'center',
+                          lineHeight: 1.15,
+                          width: '92%'
+                        }}>
+                          {badge.description || t.defaultRewardDesc}
+                        </div>
+
+                        {/* Date */}
+                        <div style={{ fontSize: '0.65rem', color: '#888', marginTop: '3px' }}>
+                          {badge.date}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Section 6: Feedbacks */}
               {state.feedbacks && state.feedbacks.length > 0 && (
-                <div style={{ marginBottom: '28px' }}>
-                  <h3 style={{ margin: '0 0 12px 0', color: '#1e3a8a', fontSize: '1.05rem', fontWeight: 800 }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800 }}>
                     💬 {t.pdfFeedbacks}
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {state.feedbacks.slice(0, 3).map(fb => (
-                      <div key={fb.id} style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '10px', padding: '10px 14px', fontSize: '0.85rem' }}>
+                      <div key={fb.id} style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '10px', padding: '8px 12px', fontSize: '0.82rem' }}>
                         <span style={{ marginRight: '8px' }}>{fb.emoji}</span>
                         <strong>{fb.lessonTitle}:</strong> {fb.note}
                         <span style={{ float: 'right', color: '#8c8c8c', fontSize: '0.75rem' }}>{fb.date}</span>
@@ -411,23 +564,23 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
 
               {/* Section 7: Official Sign-off Footer */}
               <div style={{
-                marginTop: '40px',
-                paddingTop: '20px',
+                marginTop: '36px',
+                paddingTop: '16px',
                 borderTop: '2px dashed #cbd5e1',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
                 textAlign: 'center',
-                fontSize: '0.9rem'
+                fontSize: '0.88rem'
               }}>
                 <div>
                   <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{t.pdfParentSign}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
-                  <div style={{ height: '50px' }}></div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
+                  <div style={{ height: '45px' }}></div>
                 </div>
                 <div>
                   <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{t.pdfTeacherSign}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
-                  <div style={{ height: '50px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', color: '#2563eb', fontWeight: 800, fontFamily: 'cursive' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
+                  <div style={{ height: '45px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', color: '#2563eb', fontWeight: 800, fontFamily: 'cursive' }}>
                     {state.profile.teacherName || 'Cô Giáo'}
                   </div>
                 </div>
