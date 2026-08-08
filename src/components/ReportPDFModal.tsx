@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { X, Download, FileText, CheckCircle2, Award, Sparkles, BookOpen, GraduationCap, User } from 'lucide-react';
+import { X, Download, FileText, CheckCircle2, Award, Sparkles, BookOpen, GraduationCap, User, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -55,6 +55,24 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
   const t = translations[lang];
   const reportRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const allLessons = state.curriculum.flatMap(w => w.lessons);
+
+  // Lesson Selection State: By default, ONLY select lessons that are completed or have progress
+  const [selectedLessonIds, setSelectedLessonIds] = useState<number[]>(() => {
+    return state.completedLessons.length > 0 ? state.completedLessons : [1];
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      if (state.completedLessons.length > 0) {
+        setSelectedLessonIds(state.completedLessons);
+      } else {
+        const lessonsWithProgress = allLessons.filter(l => (state.completedStages[l.id]?.length || 0) > 0).map(l => l.id);
+        setSelectedLessonIds(lessonsWithProgress.length > 0 ? lessonsWithProgress : [allLessons[0].id]);
+      }
+    }
+  }, [isOpen, state.completedLessons]);
 
   if (!isOpen) return null;
 
@@ -116,6 +134,8 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const lessonsToExport = allLessons.filter(l => selectedLessonIds.includes(l.id));
+
   return ReactDOM.createPortal(
     <AnimatePresence>
       <motion.div
@@ -146,18 +166,18 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
           style={{
             background: 'white',
             borderRadius: '24px',
-            maxWidth: '900px',
+            maxWidth: '920px',
             width: '100%',
-            maxHeight: '90vh',
+            maxHeight: '92vh',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
             overflow: 'hidden'
           }}
         >
-          {/* Modal Header */}
+          {/* Modal Top Header */}
           <div style={{
-            padding: '18px 24px',
+            padding: '16px 24px',
             borderBottom: '1px solid #e2e8f0',
             display: 'flex',
             justifyContent: 'space-between',
@@ -176,20 +196,20 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleDownloadPDF}
-                disabled={isGenerating}
+                disabled={isGenerating || selectedLessonIds.length === 0}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  background: '#10b981',
+                  background: selectedLessonIds.length === 0 ? '#94a3b8' : '#10b981',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
                   padding: '8px 18px',
                   fontWeight: 'bold',
                   fontSize: '0.9rem',
-                  cursor: isGenerating ? 'wait' : 'pointer',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                  cursor: isGenerating ? 'wait' : selectedLessonIds.length === 0 ? 'not-allowed' : 'pointer',
+                  boxShadow: selectedLessonIds.length === 0 ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.3)'
                 }}
               >
                 <Download size={18} />
@@ -216,8 +236,124 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Lesson Selector Panel (Outside Printable Area) */}
+          <div style={{
+            background: '#f8fafc',
+            padding: '14px 24px',
+            borderBottom: '2px solid #e2e8f0',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Filter size={18} color="#2563eb" />
+                <span>📌 Tùy Chọn Buổi Học Để Xuất File PDF Báo Cáo ({selectedLessonIds.length}/12 Buổi):</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLessonIds(state.completedLessons.length > 0 ? state.completedLessons : [])}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #10b981',
+                    background: '#ecfdf5',
+                    color: '#047857',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  ✓ Chỉ chọn buổi đã học ({state.completedLessons.length})
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setSelectedLessonIds(allLessons.map(l => l.id))}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #3b82f6',
+                    background: '#eff6ff',
+                    color: '#1d4ed8',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Chọn tất cả (12)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedLessonIds([])}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #fca5a5',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Bỏ chọn tất cả
+                </button>
+              </div>
+            </div>
+
+            {/* Lesson Checkbox Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
+              {allLessons.map((lesson, idx) => {
+                const isSelected = selectedLessonIds.includes(lesson.id);
+                const isCompleted = state.completedLessons.includes(lesson.id);
+
+                return (
+                  <label
+                    key={lesson.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '5px 10px',
+                      borderRadius: '10px',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      border: `1.5px solid ${isSelected ? (isCompleted ? '#10b981' : '#3b82f6') : '#cbd5e1'}`,
+                      background: isSelected ? (isCompleted ? '#d1fae5' : '#e0f2fe') : '#ffffff',
+                      color: isSelected ? (isCompleted ? '#047857' : '#0369a1') : '#64748b',
+                      userSelect: 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLessonIds([...selectedLessonIds, lesson.id]);
+                        } else {
+                          setSelectedLessonIds(selectedLessonIds.filter(id => id !== lesson.id));
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>Buổi {idx + 1} {isCompleted ? '✓' : ''}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Modal Printable Content Container (A4 Printable Area) */}
-          <div style={{ overflowY: 'auto', padding: '24px', flex: 1, background: '#f8fafc' }}>
+          <div style={{ overflowY: 'auto', padding: '24px', flex: 1, background: '#e2e8f0' }}>
             <div
               ref={reportRef}
               style={{
@@ -363,102 +499,103 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Section 4: Detailed Lesson & Activities Breakdown */}
+              {/* Section 4: Detailed Lesson & Activities Breakdown (Selected Lessons ONLY) */}
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <BookOpen size={17} color="#059669" /> Chi Tiết Hoạt Động & Tiến Độ 12 Buổi Học
+                  <BookOpen size={17} color="#059669" /> Chi Tiết Hoạt Động Báo Cáo ({lessonsToExport.length} Buổi Được Chọn)
                 </h3>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {state.curriculum.flatMap(w => w.lessons).map((lesson, idx) => {
-                    const isLessonDone = state.completedLessons.includes(lesson.id);
-                    const doneStages = state.completedStages[lesson.id] || (isLessonDone ? [0, 1, 2, 3] : []);
-                    const hasProgress = isLessonDone || doneStages.length > 0;
-                    const staticWords = lesson.words || [];
-                    const customWordsForLesson = state.customWords.filter(w => w.lessonId === lesson.id);
-                    const allLessonWords = [...staticWords, ...customWordsForLesson];
+                {lessonsToExport.length === 0 ? (
+                  <div style={{ padding: '16px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', fontSize: '0.88rem', color: '#991b1b', textAlign: 'center', fontWeight: 'bold' }}>
+                    ⚠️ Chưa chọn buổi học nào để xuất báo cáo. Vui lòng tích chọn các buổi học ở khung bên trên.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {lessonsToExport.map((lesson) => {
+                      const idx = allLessons.findIndex(l => l.id === lesson.id);
+                      const isLessonDone = state.completedLessons.includes(lesson.id);
+                      const doneStages = state.completedStages[lesson.id] || (isLessonDone ? [0, 1, 2, 3] : []);
+                      const staticWords = lesson.words || [];
+                      const customWordsForLesson = state.customWords.filter(w => w.lessonId === lesson.id);
+                      const allLessonWords = [...staticWords, ...customWordsForLesson];
 
-                    return (
-                      <div
-                        key={lesson.id}
-                        style={{
-                          background: isLessonDone ? '#ecfdf5' : hasProgress ? '#f0f9ff' : '#f8fafc',
-                          border: `1.5px solid ${isLessonDone ? '#a7f3d0' : hasProgress ? '#bae6fd' : '#e2e8f0'}`,
-                          borderRadius: '12px',
-                          padding: '10px 14px',
-                          fontSize: '0.82rem'
-                        }}
-                      >
-                        {/* Lesson Header Line */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: hasProgress ? '8px' : '0' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <CheckCircle2 size={18} color={isLessonDone ? '#059669' : hasProgress ? '#0284c7' : '#cbd5e1'} />
-                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: isLessonDone ? '#065f46' : hasProgress ? '#0369a1' : '#64748b' }}>
-                              Buổi {idx + 1}: {lesson.title}
+                      return (
+                        <div
+                          key={lesson.id}
+                          style={{
+                            background: isLessonDone ? '#ecfdf5' : '#f0f9ff',
+                            border: `1.5px solid ${isLessonDone ? '#a7f3d0' : '#bae6fd'}`,
+                            borderRadius: '12px',
+                            padding: '12px 14px',
+                            fontSize: '0.82rem'
+                          }}
+                        >
+                          {/* Lesson Header Line */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <CheckCircle2 size={18} color={isLessonDone ? '#059669' : '#0284c7'} />
+                              <span style={{ fontWeight: 800, fontSize: '0.92rem', color: isLessonDone ? '#065f46' : '#0369a1' }}>
+                                Buổi {idx + 1}: {lesson.title}
+                              </span>
+                            </div>
+                            <span style={{
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              background: isLessonDone ? '#d1fae5' : '#e0f2fe',
+                              color: isLessonDone ? '#047857' : '#0369a1'
+                            }}>
+                              {isLessonDone ? `✓ Hoàn thành (${doneStages.length}/${lesson.stages.length} chặng)` : `Đang học (${doneStages.length}/${lesson.stages.length} chặng)`}
                             </span>
                           </div>
-                          <span style={{
-                            padding: '3px 10px',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            background: isLessonDone ? '#d1fae5' : hasProgress ? '#e0f2fe' : '#f1f5f9',
-                            color: isLessonDone ? '#047857' : hasProgress ? '#0369a1' : '#94a3b8'
-                          }}>
-                            {isLessonDone ? `✓ Hoàn thành (${doneStages.length}/${lesson.stages.length} chặng)` : hasProgress ? `Đang học (${doneStages.length}/${lesson.stages.length} chặng)` : `⚪ Chưa học`}
-                          </span>
-                        </div>
 
-                        {/* Stages & Vocabulary Breakdown ONLY when lesson has progress */}
-                        {hasProgress && (
-                          <>
-                            {/* Stages Breakdown */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '6px', background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                              {lesson.stages.map((stage, stageIdx) => {
-                                const isStageDone = isLessonDone || doneStages.includes(stageIdx);
-                                return (
-                                  <div key={stageIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: isStageDone ? '#0f766e' : '#64748b' }}>
-                                    <span style={{ color: isStageDone ? '#059669' : '#cbd5e1', fontWeight: 'bold' }}>
-                                      {isStageDone ? '☑' : '▫'}
-                                    </span>
-                                    <div>
-                                      <strong style={{ color: isStageDone ? '#0f766e' : '#475569' }}>{stage.name}:</strong> {stage.desc}
-                                    </div>
+                          {/* Stages Breakdown */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '6px', background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            {lesson.stages.map((stage, stageIdx) => {
+                              const isStageDone = isLessonDone || doneStages.includes(stageIdx);
+                              return (
+                                <div key={stageIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: isStageDone ? '#0f766e' : '#64748b' }}>
+                                  <span style={{ color: isStageDone ? '#059669' : '#cbd5e1', fontWeight: 'bold' }}>
+                                    {isStageDone ? '☑' : '▫'}
+                                  </span>
+                                  <div>
+                                    <strong style={{ color: isStageDone ? '#0f766e' : '#475569' }}>{stage.name}:</strong> {stage.desc}
                                   </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Vocabulary Words (Static + Custom Added Words) */}
+                          {allLessonWords.length > 0 && (
+                            <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <strong style={{ color: '#2563eb' }}>🔤 Từ vựng ({allLessonWords.length}):</strong>
+                              {allLessonWords.map((w, wIdx) => {
+                                const isCustom = 'id' in w && !staticWords.some(sw => sw.en === w.en);
+                                return (
+                                  <span 
+                                    key={wIdx} 
+                                    style={{ 
+                                      background: isCustom ? '#fef3c7' : '#eff6ff', 
+                                      border: `1px solid ${isCustom ? '#fcd34d' : '#bfdbfe'}`, 
+                                      padding: '1px 6px', 
+                                      borderRadius: '6px', 
+                                      color: isCustom ? '#b45309' : '#1d4ed8',
+                                      fontWeight: isCustom ? 'bold' : 'normal'
+                                    }}
+                                  >
+                                    <strong>{w.en}</strong> ({w.vi}){isCustom ? ' ✨' : ''}
+                                  </span>
                                 );
                               })}
                             </div>
-
-                            {/* Vocabulary Words (Static + Custom Added Words) */}
-                            {allLessonWords.length > 0 && (
-                              <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                <strong style={{ color: '#2563eb' }}>🔤 Từ vựng ({allLessonWords.length}):</strong>
-                                {allLessonWords.map((w, wIdx) => {
-                                  const isCustom = 'id' in w && !staticWords.some(sw => sw.en === w.en);
-                                  return (
-                                    <span 
-                                      key={wIdx} 
-                                      style={{ 
-                                        background: isCustom ? '#fef3c7' : '#eff6ff', 
-                                        border: `1px solid ${isCustom ? '#fcd34d' : '#bfdbfe'}`, 
-                                        padding: '1px 6px', 
-                                        borderRadius: '6px', 
-                                        color: isCustom ? '#b45309' : '#1d4ed8',
-                                        fontWeight: isCustom ? 'bold' : 'normal'
-                                      }}
-                                    >
-                                      <strong>{w.en}</strong> ({w.vi}){isCustom ? ' ✨' : ''}
-                                    </span>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Section 5: Badges / Visual Certificates Cards */}
