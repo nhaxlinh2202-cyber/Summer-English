@@ -373,6 +373,9 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                   {state.curriculum.flatMap(w => w.lessons).map((lesson, idx) => {
                     const isLessonDone = state.completedLessons.includes(lesson.id);
                     const doneStages = state.completedStages[lesson.id] || (isLessonDone ? [0, 1, 2, 3] : []);
+                    const staticWords = lesson.words || [];
+                    const customWordsForLesson = state.customWords.filter(w => w.lessonId === lesson.id);
+                    const allLessonWords = [...staticWords, ...customWordsForLesson];
 
                     return (
                       <div
@@ -422,15 +425,28 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                           })}
                         </div>
 
-                        {/* Vocabulary Words */}
-                        {lesson.words && lesson.words.length > 0 && (
+                        {/* Vocabulary Words (Static + Custom Added Words) */}
+                        {allLessonWords.length > 0 && (
                           <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <strong style={{ color: '#2563eb' }}>🔤 Từ vựng:</strong>
-                            {lesson.words.map((w, wIdx) => (
-                              <span key={wIdx} style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '1px 6px', borderRadius: '6px', color: '#1d4ed8' }}>
-                                <strong>{w.en}</strong> ({w.vi})
-                              </span>
-                            ))}
+                            <strong style={{ color: '#2563eb' }}>🔤 Từ vựng ({allLessonWords.length}):</strong>
+                            {allLessonWords.map((w, wIdx) => {
+                              const isCustom = 'id' in w && !staticWords.some(sw => sw.en === w.en);
+                              return (
+                                <span 
+                                  key={wIdx} 
+                                  style={{ 
+                                    background: isCustom ? '#fef3c7' : '#eff6ff', 
+                                    border: `1px solid ${isCustom ? '#fcd34d' : '#bfdbfe'}`, 
+                                    padding: '1px 6px', 
+                                    borderRadius: '6px', 
+                                    color: isCustom ? '#b45309' : '#1d4ed8',
+                                    fontWeight: isCustom ? 'bold' : 'normal'
+                                  }}
+                                >
+                                  <strong>{w.en}</strong> ({w.vi}){isCustom ? ' ✨' : ''}
+                                </span>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
