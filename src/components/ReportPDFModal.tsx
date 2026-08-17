@@ -115,9 +115,9 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
       const scale = canvas.width / domWidth;
       const pageCanvasHeight = (canvas.width * pdfHeight) / pdfWidth;
 
-      // Find all indivisible items (sections, cards, lesson items, table rows, headers)
+      // Find all indivisible atomic items (cards, lesson items, table rows)
       const breakableNodes = Array.from(
-        element.querySelectorAll('.pdf-section, .pdf-card, .pdf-item, tr, h3, h1')
+        element.querySelectorAll('.pdf-card, .pdf-item, tr')
       ) as HTMLElement[];
 
       const containerRect = element.getBoundingClientRect();
@@ -127,6 +127,15 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
         const elemBottom = elemTop + rect.height * scale;
         return { top: elemTop, bottom: elemBottom };
       }).filter(r => r.bottom > r.top).sort((a, b) => a.top - b.top);
+
+      // Find heading positions to prevent orphan section headers at bottom of page
+      const headingNodes = Array.from(element.querySelectorAll('h3, h2, h1')) as HTMLElement[];
+      const headingRects = headingNodes.map(node => {
+        const rect = node.getBoundingClientRect();
+        const elemTop = (rect.top - containerRect.top) * scale;
+        const elemBottom = elemTop + rect.height * scale;
+        return { top: elemTop, bottom: elemBottom };
+      });
 
       // Compute smart page break positions in canvas pixels
       const pageBreaks: number[] = [0];
@@ -140,11 +149,16 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
           break;
         }
 
-        // Check if nextBreak cuts through any indivisible element
+        // Check if nextBreak cuts through any indivisible atomic item (.pdf-card, .pdf-item, tr)
         const straddling = elementRects.find(r => r.top < nextBreak && r.bottom > nextBreak);
         if (straddling && straddling.top > currentY + 100) {
-          // Move the page break UP to the top of the element so it doesn't get sliced!
           nextBreak = straddling.top;
+        }
+
+        // Orphan heading protection: If heading is within 80px before page break, move break above heading
+        const orphanHeading = headingRects.find(h => h.top < nextBreak && h.top > nextBreak - 80 && h.top > currentY + 100);
+        if (orphanHeading) {
+          nextBreak = orphanHeading.top - 10;
         }
 
         pageBreaks.push(nextBreak);
