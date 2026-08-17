@@ -651,24 +651,24 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
                     Chưa có phiếu bé ngoan nào được trao.
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'flex-start' }}>
                     {state.badges.map((badge) => (
                       <div
                         key={badge.id}
                         className="pdf-card"
                         style={{
-                          width: '155px',
-                          minHeight: '235px',
+                          width: '128px',
+                          minHeight: '190px',
                           backgroundColor: '#ffffff',
                           background: '#ffffff',
                           borderRadius: '12px',
-                          padding: '14px 8px 8px 8px',
+                          padding: '12px 6px 6px 6px',
                           textAlign: 'center',
                           position: 'relative',
                           border: '2px solid #d81b60',
                           outline: '1.5px solid #ffffff',
                           outlineOffset: '-5px',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                          boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1)',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
@@ -679,11 +679,11 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
                         {/* Red Push Pin (Positioned safely inside card boundary) */}
                         <div style={{
                           position: 'absolute',
-                          top: '4px',
+                          top: '3px',
                           left: '50%',
                           transform: 'translateX(-50%)',
-                          width: '12px',
-                          height: '12px',
+                          width: '10px',
+                          height: '10px',
                           borderRadius: '50%',
                           background: 'radial-gradient(circle at 35% 35%, #ff5252 0%, #b71c1c 100%)',
                           border: '1px solid #ffffff',
@@ -693,25 +693,25 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
 
                         {/* Title */}
                         <h4 style={{ 
-                          margin: '6px 0 0 0', 
+                          margin: '4px 0 0 0', 
                           color: '#c2185b', 
-                          fontSize: '0.8rem', 
+                          fontSize: '0.7rem', 
                           fontWeight: 900,
-                          letterSpacing: '0.2px',
+                          letterSpacing: '0.1px',
                           textTransform: 'uppercase'
                         }}>
                           {t.badgeCardTitle}
                         </h4>
 
                         {/* Student Photo Flower Mascot */}
-                        <div style={{ margin: '2px 0' }}>
-                          <BeNgoanFlowerPDF size={76} photoUrl={badge.photoUrl || '/student_photo.png'} />
+                        <div style={{ margin: '1px 0' }}>
+                          <BeNgoanFlowerPDF size={62} photoUrl={badge.photoUrl || '/student_photo.png'} />
                         </div>
 
                         {/* Student Name */}
                         <div style={{ 
                           color: '#c2185b', 
-                          fontSize: '1rem', 
+                          fontSize: '0.85rem', 
                           fontWeight: 'bold',
                           fontFamily: '"Dancing Script", "Be Vietnam Pro", cursive, sans-serif',
                           margin: '0 0 2px 0',
@@ -724,20 +724,20 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
                         <div style={{
                           border: '1px solid #d81b60',
                           borderRadius: '4px',
-                          padding: '3px 4px',
+                          padding: '2px 3px',
                           background: '#ffffff',
                           color: '#111827',
                           fontWeight: 800,
-                          fontSize: '0.68rem',
+                          fontSize: '0.62rem',
                           textAlign: 'center',
                           lineHeight: 1.15,
-                          width: '92%'
+                          width: '94%'
                         }}>
                           {badge.description || t.defaultRewardDesc}
                         </div>
 
                         {/* Date */}
-                        <div style={{ fontSize: '0.65rem', color: '#888', marginTop: '3px' }}>
+                        <div style={{ fontSize: '0.6rem', color: '#888', marginTop: '2px' }}>
                           {badge.date}
                         </div>
                       </div>
