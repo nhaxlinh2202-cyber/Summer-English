@@ -162,13 +162,14 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
         // Check if nextBreak cuts through any indivisible atomic item (.pdf-card, .pdf-item, tr)
         const straddling = elementRects.find(r => r.top < nextBreak && r.bottom > nextBreak);
         if (straddling && straddling.top > currentY + 100) {
-          nextBreak = straddling.top;
+          // Break cleanly in the margin gap 16px BEFORE the card's top edge
+          nextBreak = Math.max(currentY + 100, straddling.top - 16);
         }
 
-        // Orphan heading protection: If heading is within 80px before page break, move break above heading
-        const orphanHeading = headingRects.find(h => h.top < nextBreak && h.top > nextBreak - 80 && h.top > currentY + 100);
+        // Orphan heading protection: If heading is within 100px before page break, move break 12px above heading
+        const orphanHeading = headingRects.find(h => h.top < nextBreak && h.top > nextBreak - 100 && h.top > currentY + 100);
         if (orphanHeading) {
-          nextBreak = orphanHeading.top - 10;
+          nextBreak = Math.max(currentY + 100, orphanHeading.top - 12);
         }
 
         pageBreaks.push(nextBreak);
