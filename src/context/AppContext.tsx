@@ -95,6 +95,8 @@ interface AppContextType {
   deleteTest: (testId: string) => void;
   updateTestStatus: (testId: string, score: number, accuracyPercent?: number) => void;
   addCustomWord: (word: CustomWord) => void;
+  updateWord: (weekId: number, lessonId: number, wordIndex: number, newWord: { en: string; vi: string }, customWordId?: string) => void;
+  deleteWord: (weekId: number, lessonId: number, wordIndex: number, customWordId?: string) => void;
   updateStage: (weekId: number, lessonId: number, stageIdx: number, newStage: any) => void;
   addStage: (weekId: number, lessonId: number, newStage: any) => void;
   deleteStage: (weekId: number, lessonId: number, stageIdx: number) => void;
@@ -267,6 +269,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addCustomWord = (word: CustomWord) => setState(p => ({ ...p, customWords: [...p.customWords, word] }));
 
+  const updateWord = (weekId: number, lessonId: number, wordIndex: number, newWord: { en: string; vi: string }, customWordId?: string) => {
+    setState(p => {
+      if (customWordId) {
+        return {
+          ...p,
+          customWords: p.customWords.map(w => w.id === customWordId ? { ...w, en: newWord.en, vi: newWord.vi } : w)
+        };
+      }
+      const newCurriculum = JSON.parse(JSON.stringify(p.curriculum));
+      const week = newCurriculum.find((w: any) => w.week === weekId);
+      if (week) {
+        const lesson = week.lessons.find((l: any) => l.id === lessonId);
+        if (lesson && lesson.words && lesson.words[wordIndex]) {
+          lesson.words[wordIndex] = newWord;
+        }
+      }
+      return { ...p, curriculum: newCurriculum };
+    });
+  };
+
+  const deleteWord = (weekId: number, lessonId: number, wordIndex: number, customWordId?: string) => {
+    setState(p => {
+      if (customWordId) {
+        return {
+          ...p,
+          customWords: p.customWords.filter(w => w.id !== customWordId)
+        };
+      }
+      const newCurriculum = JSON.parse(JSON.stringify(p.curriculum));
+      const week = newCurriculum.find((w: any) => w.week === weekId);
+      if (week) {
+        const lesson = week.lessons.find((l: any) => l.id === lessonId);
+        if (lesson && lesson.words && lesson.words[wordIndex] !== undefined) {
+          lesson.words.splice(wordIndex, 1);
+        }
+      }
+      return { ...p, curriculum: newCurriculum };
+    });
+  };
+
   const updateStage = (weekId: number, lessonId: number, stageIdx: number, newStage: any) => {
     setState(p => {
       const newCurriculum = JSON.parse(JSON.stringify(p.curriculum)); // deep copy
@@ -438,7 +480,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{ 
       state, setLanguage, addStar, addFish, addExp, setSkin, updateHunger, setHeroMood, markStageComplete, 
       setTeacherMode, updateProfile, addBadge, deleteBadge, updateBadgeDescription, addFeedback, deleteFeedback, addTest, deleteTest, updateTestStatus, 
-      addCustomWord, updateStage, addStage, deleteStage, updateLessonTitle, addLesson, deleteLesson, resetProgress, resetSingleLesson
+      addCustomWord, updateWord, deleteWord, updateStage, addStage, deleteStage, updateLessonTitle, addLesson, deleteLesson, resetProgress, resetSingleLesson
     }}>
       {children}
     </AppContext.Provider>

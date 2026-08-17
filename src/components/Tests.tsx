@@ -185,13 +185,23 @@ const Tests: React.FC = () => {
               return (
                 <div key={test.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '16px 20px', borderRadius: '16px', border: '1px solid #eee', flexWrap: 'wrap', gap: '12px' }}>
                   <div>
-                    <h4 style={{ fontSize: '1.2rem', color: 'var(--text-main)', margin: '0 0 4px 0' }}>{test.name}</h4>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>{test.date}</p>
-                      {test.link !== '#' && (
-                        <a href={test.link} target="_blank" rel="noreferrer" style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>Xem bài làm</a>
+                    <h4 style={{ fontSize: '1.2rem', margin: '0 0 4px 0' }}>
+                      {test.link && test.link !== '#' ? (
+                        <a 
+                          href={test.link} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          style={{ color: 'var(--primary)', textDecoration: 'none', transition: 'color 0.2s', fontWeight: 'bold' }}
+                          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                        >
+                          {test.name} 🔗
+                        </a>
+                      ) : (
+                        <span style={{ color: 'var(--text-main)' }}>{test.name}</span>
                       )}
-                    </div>
+                    </h4>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>{test.date}</p>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ textAlign: 'right' }}>
