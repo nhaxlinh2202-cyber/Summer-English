@@ -113,13 +113,9 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
 
       // Helper function to calculate exact vertical offset of an element relative to the root printable container
       const getRelativeOffsetTop = (node: HTMLElement, container: HTMLElement): number => {
-        let top = 0;
-        let curr: HTMLElement | null = node;
-        while (curr && curr !== container) {
-          top += curr.offsetTop;
-          curr = curr.offsetParent as HTMLElement | null;
-        }
-        return top;
+        const nodeRect = node.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        return nodeRect.top - containerRect.top;
       };
 
       const domWidth = element.offsetWidth;
@@ -440,6 +436,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
             <div
               ref={reportRef}
               style={{
+                position: 'relative',
                 width: '794px',
                 margin: '0 auto',
                 padding: '36px',
