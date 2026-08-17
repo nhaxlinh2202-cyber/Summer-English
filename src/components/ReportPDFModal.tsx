@@ -7,59 +7,70 @@ import jsPDF from 'jspdf';
 import { useAppContext } from '../context/AppContext';
 import { translations } from '../translations';
 
-// Custom SVG Mascot for PDF (Flower shape with student photo)
-const BeNgoanFlowerPDF: React.FC<{ size?: number; photoUrl?: string }> = ({ size = 90, photoUrl }) => {
+// Vector Flower Mascot Component with Student Photo centered in 8 Large Vivid Petals (Matching Badges.tsx)
+const BeNgoanFlowerPDF: React.FC<{ size?: number; photoUrl?: string }> = ({ size = 85, photoUrl = '/student_photo.png' }) => {
+  const petals = [
+    { angle: 0, color: '#e91e63' },   // Top (Pink)
+    { angle: 45, color: '#fdd835' },  // Top Right (Yellow)
+    { angle: 90, color: '#1976d2' },  // Right (Blue)
+    { angle: 135, color: '#c2185b' }, // Bottom Right (Magenta)
+    { angle: 180, color: '#fdd835' }, // Bottom (Yellow)
+    { angle: 225, color: '#388e3c' }, // Bottom Left (Green)
+    { angle: 270, color: '#1976d2' }, // Left (Blue)
+    { angle: 315, color: '#e91e63' }, // Top Left (Pink)
+  ];
+
   return (
-    <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
-      <svg width={size} height={size} viewBox="0 0 100 100">
-        <defs>
-          <radialGradient id="pdfFlowerCenter" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fff9c4" />
-            <stop offset="100%" stopColor="#fbc02d" />
-          </radialGradient>
-        </defs>
+    <svg width={size} height={size * 1.05} viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="pdfFlowerCenterFaceClip">
+          <circle cx="100" cy="90" r="35" />
+        </clipPath>
+      </defs>
 
-        <g>
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, index) => (
-            <path
-              key={index}
-              d="M 50 50 Q 38 18 50 5 Q 62 18 50 50 Z"
-              fill={index % 2 === 0 ? '#ff4081' : '#ff80ab'}
-              transform={`rotate(${angle} 50 50)`}
+      {/* Stem & Leaves */}
+      <path d="M 100 122 L 100 195" stroke="#2e7d32" strokeWidth="8" strokeLinecap="round" />
+      <path d="M 100 160 C 65 150 45 135 40 145 C 50 165 80 165 100 165 Z" fill="#43a047" stroke="#1b5e20" strokeWidth="2" />
+      <path d="M 100 170 C 135 160 155 145 160 155 C 150 175 120 175 100 175 Z" fill="#43a047" stroke="#1b5e20" strokeWidth="2" />
+
+      {/* 8 Large Round Petals */}
+      <g id="pdf-flower-petals">
+        {petals.map((p, idx) => (
+          <g key={idx} transform={`translate(100, 90) rotate(${p.angle})`}>
+            <ellipse 
+              cx="0" 
+              cy="-42" 
+              rx="18" 
+              ry="26" 
+              fill={p.color} 
+              stroke="#222222" 
+              strokeWidth="2.5" 
             />
-          ))}
-        </g>
+          </g>
+        ))}
+      </g>
 
-        <circle cx="50" cy="50" r="27" fill="url(#pdfFlowerCenter)" stroke="#f57c00" strokeWidth="1.5" />
-      </svg>
+      {/* Center White Face Circle Background & Border */}
+      <circle cx="100" cy="90" r="35" fill="#ffffff" stroke="#222222" strokeWidth="3" />
 
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: size * 0.44,
-        height: size * 0.44,
-        borderRadius: '50%',
-        overflow: 'hidden',
-        border: '2px solid #ffffff',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-        background: '#ffffff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt="Student Avatar"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <span style={{ fontSize: `${size * 0.22}px` }}>🐱</span>
-        )}
-      </div>
-    </div>
+      {/* Real Student Photo Clipped in Center Circle */}
+      {photoUrl ? (
+        <image 
+          href={photoUrl} 
+          x="58" 
+          y="44" 
+          width="84" 
+          height="84" 
+          preserveAspectRatio="xMidYMid slice" 
+          clipPath="url(#pdfFlowerCenterFaceClip)" 
+        />
+      ) : (
+        <text x="100" y="100" fontSize="30" textAnchor="middle">🐱</text>
+      )}
+
+      {/* Decorative Outer Border Circle */}
+      <circle cx="100" cy="90" r="35" fill="none" stroke="#222222" strokeWidth="3" />
+    </svg>
   );
 };
 
