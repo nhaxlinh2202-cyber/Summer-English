@@ -630,7 +630,7 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
               </div>
 
               {/* Section 5: Badges / Visual Certificates Cards */}
-              <div style={{ marginBottom: '20px' }}>
+              <div className="pdf-item" style={{ marginBottom: '20px' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Award size={16} color="#d81b60" /> {t.pdfBadgesSummary} ({state.badges.length} Phiếu)
                 </h3>
@@ -647,11 +647,11 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
                         className="pdf-card"
                         style={{
                           width: '155px',
-                          minHeight: '230px',
+                          minHeight: '235px',
                           backgroundColor: '#ffffff',
                           background: '#ffffff',
                           borderRadius: '12px',
-                          padding: '10px 8px 8px 8px',
+                          padding: '14px 8px 8px 8px',
                           textAlign: 'center',
                           position: 'relative',
                           border: '2px solid #d81b60',
@@ -665,10 +665,10 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
                           boxSizing: 'border-box'
                         }}
                       >
-                        {/* Red Push Pin */}
+                        {/* Red Push Pin (Positioned safely inside card boundary) */}
                         <div style={{
                           position: 'absolute',
-                          top: '-8px',
+                          top: '4px',
                           left: '50%',
                           transform: 'translateX(-50%)',
                           width: '12px',
@@ -682,7 +682,7 @@ export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose 
 
                         {/* Title */}
                         <h4 style={{ 
-                          margin: '2px 0 0 0', 
+                          margin: '6px 0 0 0', 
                           color: '#c2185b', 
                           fontSize: '0.8rem', 
                           fontWeight: 900,
