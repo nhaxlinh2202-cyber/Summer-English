@@ -111,6 +111,17 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
       const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
       const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
 
+      // Helper function to calculate exact vertical offset of an element relative to the root printable container
+      const getRelativeOffsetTop = (node: HTMLElement, container: HTMLElement): number => {
+        let top = 0;
+        let curr: HTMLElement | null = node;
+        while (curr && curr !== container) {
+          top += curr.offsetTop;
+          curr = curr.offsetParent as HTMLElement | null;
+        }
+        return top;
+      };
+
       const domWidth = element.offsetWidth;
       const scale = canvas.width / domWidth;
       const pageCanvasHeight = (canvas.width * pdfHeight) / pdfWidth;
@@ -120,20 +131,19 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
         element.querySelectorAll('.pdf-card, .pdf-item, tr')
       ) as HTMLElement[];
 
-      const containerRect = element.getBoundingClientRect();
       const elementRects = breakableNodes.map(node => {
-        const rect = node.getBoundingClientRect();
-        const elemTop = (rect.top - containerRect.top) * scale;
-        const elemBottom = elemTop + rect.height * scale;
+        const topPx = getRelativeOffsetTop(node, element);
+        const elemTop = topPx * scale;
+        const elemBottom = (topPx + node.offsetHeight) * scale;
         return { top: elemTop, bottom: elemBottom };
       }).filter(r => r.bottom > r.top).sort((a, b) => a.top - b.top);
 
       // Find heading positions to prevent orphan section headers at bottom of page
       const headingNodes = Array.from(element.querySelectorAll('h3, h2, h1')) as HTMLElement[];
       const headingRects = headingNodes.map(node => {
-        const rect = node.getBoundingClientRect();
-        const elemTop = (rect.top - containerRect.top) * scale;
-        const elemBottom = elemTop + rect.height * scale;
+        const topPx = getRelativeOffsetTop(node, element);
+        const elemTop = topPx * scale;
+        const elemBottom = (topPx + node.offsetHeight) * scale;
         return { top: elemTop, bottom: elemBottom };
       });
 
