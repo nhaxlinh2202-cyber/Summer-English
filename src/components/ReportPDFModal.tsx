@@ -1,83 +1,85 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { X, Download, FileText, CheckCircle2, Award, Sparkles, BookOpen, GraduationCap, User, Filter } from 'lucide-react';
+import { X, Download, BookOpen, User, Sparkles, GraduationCap, Award, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useAppContext } from '../context/AppContext';
 import { translations } from '../translations';
 
+// Custom SVG Mascot for PDF (Flower shape with student photo)
+const BeNgoanFlowerPDF: React.FC<{ size?: number; photoUrl?: string }> = ({ size = 90, photoUrl }) => {
+  return (
+    <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
+      <svg width={size} height={size} viewBox="0 0 100 100">
+        <defs>
+          <radialGradient id="pdfFlowerCenter" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fff9c4" />
+            <stop offset="100%" stopColor="#fbc02d" />
+          </radialGradient>
+        </defs>
+
+        <g>
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, index) => (
+            <path
+              key={index}
+              d="M 50 50 Q 38 18 50 5 Q 62 18 50 50 Z"
+              fill={index % 2 === 0 ? '#ff4081' : '#ff80ab'}
+              transform={`rotate(${angle} 50 50)`}
+            />
+          ))}
+        </g>
+
+        <circle cx="50" cy="50" r="27" fill="url(#pdfFlowerCenter)" stroke="#f57c00" strokeWidth="1.5" />
+      </svg>
+
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: size * 0.44,
+        height: size * 0.44,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        border: '2px solid #ffffff',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        background: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt="Student Avatar"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <span style={{ fontSize: `${size * 0.22}px` }}>🐱</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 interface ReportPDFModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Vector Flower Mascot Component for PDF Export Cards
-const BeNgoanFlowerPDF: React.FC<{ size?: number; photoUrl?: string }> = ({ size = 85, photoUrl = '/student_photo.png' }) => {
-  const petals = [
-    { angle: 0, color: '#e91e63' },
-    { angle: 45, color: '#fdd835' },
-    { angle: 90, color: '#1976d2' },
-    { angle: 135, color: '#c2185b' },
-    { angle: 180, color: '#fdd835' },
-    { angle: 225, color: '#388e3c' },
-    { angle: 270, color: '#1976d2' },
-    { angle: 315, color: '#e91e63' },
-  ];
-
-  return (
-    <svg width={size} height={size * 1.1} viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <clipPath id="pdfFlowerFaceClip">
-          <circle cx="100" cy="90" r="35" />
-        </clipPath>
-      </defs>
-      <path d="M 100 122 L 100 195" stroke="#2e7d32" strokeWidth="8" strokeLinecap="round" />
-      <path d="M 100 160 C 65 150 45 135 40 145 C 50 165 80 165 100 165 Z" fill="#43a047" stroke="#1b5e20" strokeWidth="2" />
-      <path d="M 100 170 C 135 160 155 145 160 155 C 150 175 120 175 100 175 Z" fill="#43a047" stroke="#1b5e20" strokeWidth="2" />
-      <g>
-        {petals.map((p, idx) => (
-          <g key={idx} transform={`translate(100, 90) rotate(${p.angle})`}>
-            <ellipse cx="0" cy="-42" rx="18" ry="26" fill={p.color} stroke="#222222" strokeWidth="2.5" />
-          </g>
-        ))}
-      </g>
-      <circle cx="100" cy="90" r="35" fill="#ffffff" stroke="#222222" strokeWidth="3" />
-      <image href={photoUrl} x="58" y="44" width="84" height="84" preserveAspectRatio="xMidYMid slice" clipPath="url(#pdfFlowerFaceClip)" />
-      <circle cx="100" cy="90" r="35" fill="none" stroke="#222222" strokeWidth="3" />
-    </svg>
-  );
-};
-
-const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
+export const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
   const { state } = useAppContext();
-  const lang = state.language || 'vi';
-  const t = translations[lang];
-  const reportRef = useRef<HTMLDivElement>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-
   const allLessons = state.curriculum.flatMap(w => w.lessons);
-
-  // Lesson Selection State: By default, ONLY select lessons that are completed or have progress
-  const [selectedLessonIds, setSelectedLessonIds] = useState<number[]>(() => {
-    return state.completedLessons.length > 0 ? state.completedLessons : [1];
-  });
-
-  useEffect(() => {
-    if (isOpen) {
-      if (state.completedLessons.length > 0) {
-        setSelectedLessonIds(state.completedLessons);
-      } else {
-        const lessonsWithProgress = allLessons.filter(l => (state.completedStages[l.id]?.length || 0) > 0).map(l => l.id);
-        setSelectedLessonIds(lessonsWithProgress.length > 0 ? lessonsWithProgress : [allLessons[0].id]);
-      }
-    }
-  }, [isOpen, state.completedLessons]);
+  const reportRef = React.useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedLessonIds, setSelectedLessonIds] = useState<number[]>([1, 2]);
 
   if (!isOpen) return null;
 
-  const totalLessons = 12;
+  const t = translations[state.language || 'vi'];
   const completedCount = state.completedLessons.length;
+  const totalLessons = allLessons.length;
   const progressPercent = Math.round((completedCount / totalLessons) * 100);
 
   const completedTests = state.tests.filter(t => t.status === 'completed');
@@ -85,13 +87,13 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
     ? Math.round(completedTests.reduce((acc, curr) => acc + curr.score, 0) / completedTests.length)
     : null;
 
-  const todayStr = new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'vi-VN', {
+  const todayStr = new Date().toLocaleDateString(state.language === 'en' ? 'en-US' : 'vi-VN', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
 
-  // Smart Page-Break Algorithm: Prevents slicing through cards, sections, or rows!
+  // Publication-grade Page-Break & Canvas Rendering Algorithm
   const handleDownloadPDF = async () => {
     if (!reportRef.current) return;
     setIsGenerating(true);
@@ -111,16 +113,16 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
       const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
       const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
 
+      const domWidth = element.offsetWidth;
+      const scale = canvas.width / domWidth;
+      const pageCanvasHeight = (canvas.width * pdfHeight) / pdfWidth;
+
       // Helper function to calculate exact vertical offset of an element relative to the root printable container
       const getRelativeOffsetTop = (node: HTMLElement, container: HTMLElement): number => {
         const nodeRect = node.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
         return nodeRect.top - containerRect.top;
       };
-
-      const domWidth = element.offsetWidth;
-      const scale = canvas.width / domWidth;
-      const pageCanvasHeight = (canvas.width * pdfHeight) / pdfWidth;
 
       // Find all indivisible atomic items (cards, lesson items, table rows)
       const breakableNodes = Array.from(
@@ -158,14 +160,14 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
         // Check if nextBreak cuts through any indivisible atomic item (.pdf-card, .pdf-item, tr)
         const straddling = elementRects.find(r => r.top < nextBreak && r.bottom > nextBreak);
         if (straddling && straddling.top > currentY + 100) {
-          // Break cleanly in the margin gap 16px BEFORE the card's top edge
-          nextBreak = Math.max(currentY + 100, straddling.top - 16);
+          // Break cleanly in the margin gap 12px BEFORE the card's top edge
+          nextBreak = Math.max(currentY + 100, straddling.top - 12);
         }
 
-        // Orphan heading protection: If heading is within 100px before page break, move break 12px above heading
+        // Orphan heading protection: If heading is within 100px before page break, move break 10px above heading
         const orphanHeading = headingRects.find(h => h.top < nextBreak && h.top > nextBreak - 100 && h.top > currentY + 100);
         if (orphanHeading) {
-          nextBreak = Math.max(currentY + 100, orphanHeading.top - 12);
+          nextBreak = Math.max(currentY + 100, orphanHeading.top - 10);
         }
 
         pageBreaks.push(nextBreak);
@@ -228,85 +230,91 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(15, 23, 42, 0.75)',
+          background: 'rgba(0, 0, 0, 0.65)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 99999,
-          backdropFilter: 'blur(6px)',
-          padding: '20px'
+          zIndex: 9999,
+          backdropFilter: 'blur(5px)'
         }}
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          initial={{ scale: 0.92, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          exit={{ scale: 0.92, opacity: 0, y: 20 }}
           onClick={e => e.stopPropagation()}
           style={{
-            background: 'white',
-            borderRadius: '24px',
+            width: '94%',
             maxWidth: '920px',
-            width: '100%',
             maxHeight: '92vh',
+            background: '#ffffff',
+            borderRadius: '24px',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+            position: 'relative'
           }}
         >
-          {/* Modal Top Header */}
+          {/* Modal Toolbar Header */}
           <div style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid #e2e8f0',
+            padding: '18px 24px',
+            background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+            color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
-            background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
-            color: 'white'
+            alignItems: 'center'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <FileText size={24} />
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
-                {t.pdfReportTitle}
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📄 {t.pdfReportTitle}
               </h2>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', opacity: 0.9 }}>
+                Xem trước báo cáo A4 và tùy chọn xuất file PDF chính thức
+              </p>
             </div>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={handleDownloadPDF}
-                disabled={isGenerating || selectedLessonIds.length === 0}
+                disabled={isGenerating}
                 style={{
+                  background: '#f59e0b',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '10px 20px',
+                  fontWeight: 800,
+                  fontSize: '0.92rem',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  background: selectedLessonIds.length === 0 ? '#94a3b8' : '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '8px 18px',
-                  fontWeight: 'bold',
-                  fontSize: '0.9rem',
-                  cursor: isGenerating ? 'wait' : selectedLessonIds.length === 0 ? 'not-allowed' : 'pointer',
-                  boxShadow: selectedLessonIds.length === 0 ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.3)'
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <Download size={18} />
-                <span>{isGenerating ? t.exportingPdfBtn : t.exportPdfBtn}</span>
-              </motion.button>
+                {isGenerating ? (
+                  <span>⏳ Đang Tạo PDF...</span>
+                ) : (
+                  <>
+                    <Download size={18} /> {t.exportPdfBtn}
+                  </>
+                )}
+              </button>
 
               <button
                 onClick={onClose}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255,255,255,0.2)',
                   border: 'none',
                   borderRadius: '50%',
                   width: '36px',
                   height: '36px',
+                  color: 'white',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
                   cursor: 'pointer'
                 }}
               >
@@ -315,101 +323,32 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Lesson Selector Panel (Outside Printable Area) */}
-          <div style={{
-            background: '#f8fafc',
-            padding: '14px 24px',
-            borderBottom: '2px solid #e2e8f0',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-              <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Filter size={18} color="#2563eb" />
-                <span>📌 Tùy Chọn Buổi Học Để Xuất File PDF Báo Cáo ({selectedLessonIds.length}/12 Buổi):</span>
-              </div>
+          {/* Lesson Selector Bar */}
+          <div style={{ padding: '12px 24px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Calendar size={16} color="#2563eb" /> Chọn Các Buổi Học Xuất Vào Báo Cáo:
+            </span>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedLessonIds(state.completedLessons.length > 0 ? state.completedLessons : [])}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #10b981',
-                    background: '#ecfdf5',
-                    color: '#047857',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  ✓ Chỉ chọn buổi đã học ({state.completedLessons.length})
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setSelectedLessonIds(allLessons.map(l => l.id))}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #3b82f6',
-                    background: '#eff6ff',
-                    color: '#1d4ed8',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Chọn tất cả (12)
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSelectedLessonIds([])}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '8px',
-                    border: '1.5px solid #fca5a5',
-                    background: '#fef2f2',
-                    color: '#dc2626',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Bỏ chọn tất cả
-                </button>
-              </div>
-            </div>
-
-            {/* Lesson Checkbox Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
               {allLessons.map((lesson, idx) => {
                 const isSelected = selectedLessonIds.includes(lesson.id);
                 const isCompleted = state.completedLessons.includes(lesson.id);
-
                 return (
                   <label
                     key={lesson.id}
                     style={{
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
                       padding: '5px 10px',
-                      borderRadius: '10px',
+                      borderRadius: '8px',
+                      border: `1.5px solid ${isSelected ? '#2563eb' : '#cbd5e1'}`,
+                      background: isSelected ? '#eff6ff' : '#ffffff',
+                      color: isSelected ? '#1d4ed8' : '#64748b',
                       fontSize: '0.8rem',
-                      fontWeight: 'bold',
+                      fontWeight: isSelected ? 'bold' : 'normal',
                       cursor: 'pointer',
-                      border: `1.5px solid ${isSelected ? (isCompleted ? '#10b981' : '#3b82f6') : '#cbd5e1'}`,
-                      background: isSelected ? (isCompleted ? '#d1fae5' : '#e0f2fe') : '#ffffff',
-                      color: isSelected ? (isCompleted ? '#047857' : '#0369a1') : '#64748b',
-                      userSelect: 'none',
-                      transition: 'all 0.15s ease'
+                      userSelect: 'none'
                     }}
                   >
                     <input
@@ -453,9 +392,9 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                paddingBottom: '16px',
-                borderBottom: '3px solid #3b82f6',
-                marginBottom: '20px'
+                paddingBottom: '14px',
+                borderBottom: '3px solid #2563eb',
+                marginBottom: '18px'
               }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563eb', fontWeight: 900, fontSize: '1.35rem' }}>
@@ -467,15 +406,15 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 'bold' }}>NGÀY XUẤT BÁO CÁO</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold' }}>NGÀY XUẤT BÁO CÁO</div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>{todayStr}</div>
                 </div>
               </div>
 
               {/* Report Main Title */}
-              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <h1 style={{
-                  fontSize: '1.6rem',
+                  fontSize: '1.5rem',
                   fontWeight: 900,
                   color: '#1e3a8a',
                   margin: '0 0 4px 0',
@@ -484,23 +423,23 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 }}>
                   {t.pdfReportTitle}
                 </h1>
-                <div style={{ fontSize: '0.85rem', color: '#475569', fontStyle: 'italic' }}>
-                  Tổng hợp thành tích, chi tiết hoạt động học tập và ảnh phiếu bé ngoan
+                <div style={{ fontSize: '0.82rem', color: '#475569', fontStyle: 'italic' }}>
+                  Tổng hợp thành tích học tập, kết quả kiểm tra và hoạt động thực hành
                 </div>
               </div>
 
-              {/* Section 1: Student & Teacher Profile */}
-              <div className="pdf-section" style={{
-                background: '#f1f5f9',
-                borderRadius: '14px',
-                padding: '16px 20px',
-                marginBottom: '20px',
+              {/* Section 1: Student & Teacher Profile (Atomic Card) */}
+              <div className="pdf-item" style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '14px 18px',
+                marginBottom: '18px',
                 border: '1.5px solid #cbd5e1'
               }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <User size={17} color="#2563eb" /> {t.pdfStudentInfo}
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <User size={16} color="#2563eb" /> {t.pdfStudentInfo}
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', fontSize: '0.88rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '0.85rem' }}>
                   <div><strong>Tên Học Sinh:</strong> <span style={{ color: '#2563eb', fontWeight: 800 }}>{state.profile.studentName || 'Bé Ngoan'}</span></div>
                   <div><strong>Lớp / Tuổi:</strong> {state.profile.studentClass || 'Lớp 3A'}</div>
                   <div><strong>Giáo Viên Hướng Dẫn:</strong> {state.profile.teacherName || 'Cô Giáo'}</div>
@@ -510,31 +449,31 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Section 2: Key Stats Overview */}
-              <div className="pdf-section" style={{ marginBottom: '24px' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sparkles size={17} color="#eab308" /> {t.pdfOverviewStats}
+              {/* Section 2: Key Stats Overview (Atomic Card) */}
+              <div className="pdf-item" style={{ marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Sparkles size={16} color="#eab308" /> {t.pdfOverviewStats}
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                   
-                  <div style={{ background: '#fef2f2', border: '1.5px solid #fca5a5', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 'bold' }}>TÍCH LŨY SAO / XP</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#dc2626', marginTop: '2px' }}>{state.stars} ⭐</div>
+                  <div style={{ background: '#fef2f2', border: '1.5px solid #fca5a5', padding: '10px 8px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#991b1b', fontWeight: 'bold' }}>TÍCH LŨY SAO / XP</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#dc2626', marginTop: '2px' }}>{state.stars} ⭐</div>
                   </div>
 
-                  <div style={{ background: '#ecfdf5', border: '1.5px solid #6ee7b7', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#065f46', fontWeight: 'bold' }}>TIẾN ĐỘ BÀI HỌC</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#059669', marginTop: '2px' }}>{completedCount}/{totalLessons} ({progressPercent}%)</div>
+                  <div style={{ background: '#ecfdf5', border: '1.5px solid #6ee7b7', padding: '10px 8px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: 'bold' }}>TIẾN ĐỘ BÀI HỌC</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#059669', marginTop: '2px' }}>{completedCount}/{totalLessons} ({progressPercent}%)</div>
                   </div>
 
-                  <div style={{ background: '#f0f9ff', border: '1.5px solid #7dd3fc', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#075985', fontWeight: 'bold' }}>CẤP ĐỘ MÈO CAM</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>Lv. {state.catLevel} 🐱</div>
+                  <div style={{ background: '#f0f9ff', border: '1.5px solid #7dd3fc', padding: '10px 8px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#075985', fontWeight: 'bold' }}>CẤP ĐỘ MÈO CAM</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>Lv. {state.catLevel} 🐱</div>
                   </div>
 
-                  <div style={{ background: '#faf5ff', border: '1.5px solid #d8b4fe', padding: '12px', borderRadius: '12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#6b21a8', fontWeight: 'bold' }}>ĐIỂM ĐÁNH GIÁ TB</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#9333ea', marginTop: '2px' }}>
+                  <div style={{ background: '#faf5ff', border: '1.5px solid #d8b4fe', padding: '10px 8px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#6b21a8', fontWeight: 'bold' }}>ĐIỂM ĐÁNH GIÁ TB</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#9333ea', marginTop: '2px' }}>
                       {avgScore !== null ? `${avgScore}đ` : 'Chưa thi'}
                     </div>
                   </div>
@@ -542,34 +481,34 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Section 3: Test History */}
-              <div className="pdf-section" style={{ marginBottom: '24px' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <GraduationCap size={17} color="#4f46e5" /> {t.pdfTestHistory}
+              {/* Section 3: Test History Table */}
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 8px 0', color: '#1e3a8a', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <GraduationCap size={16} color="#4f46e5" /> {t.pdfTestHistory}
                 </h3>
                 {completedTests.length === 0 ? (
-                  <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.85rem', color: '#64748b' }}>
+                  <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.82rem', color: '#64748b' }}>
                     Chưa có bài kiểm tra nào được hoàn thành.
                   </div>
                 ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                     <thead>
-                      <tr style={{ background: '#e0e7ff', color: '#3730a3', textAlign: 'left' }}>
-                        <th style={{ padding: '8px 10px', borderRadius: '6px 0 0 6px' }}>Tên Bài Kiểm Tra</th>
-                        <th style={{ padding: '8px 10px' }}>Ngày Làm Bài</th>
-                        <th style={{ padding: '8px 10px' }}>Điểm Số</th>
-                        <th style={{ padding: '8px 10px', borderRadius: '0 6px 6px 0' }}>Đánh Giá</th>
+                      <tr style={{ background: '#4f46e5', color: '#ffffff', textAlign: 'left' }}>
+                        <th style={{ padding: '7px 10px', borderRadius: '6px 0 0 6px' }}>Tên Bài Kiểm Tra</th>
+                        <th style={{ padding: '7px 10px' }}>Ngày Làm Bài</th>
+                        <th style={{ padding: '7px 10px' }}>Điểm Số / Tỷ Lệ Đúng</th>
+                        <th style={{ padding: '7px 10px', borderRadius: '0 6px 6px 0' }}>Đánh Giá</th>
                       </tr>
                     </thead>
                     <tbody>
                       {completedTests.map((test, idx) => (
-                        <tr key={test.id} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          <td style={{ padding: '8px 10px', fontWeight: 'bold', color: '#1e293b' }}>{test.name}</td>
-                          <td style={{ padding: '8px 10px', color: '#64748b' }}>{test.date}</td>
-                          <td style={{ padding: '8px 10px', fontWeight: 900, color: test.score >= 90 ? '#059669' : test.score >= 60 ? '#2563eb' : '#dc2626' }}>
+                        <tr key={test.id} className="pdf-item" style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                          <td style={{ padding: '7px 10px', fontWeight: 'bold', color: '#1e293b' }}>{test.name}</td>
+                          <td style={{ padding: '7px 10px', color: '#64748b' }}>{test.date}</td>
+                          <td style={{ padding: '7px 10px', fontWeight: 900, color: test.score >= 90 ? '#059669' : test.score >= 60 ? '#2563eb' : '#dc2626' }}>
                             {test.score}/100đ ({test.accuracyPercent ?? test.score}% câu đúng)
                           </td>
-                          <td style={{ padding: '8px 10px', fontWeight: 'bold' }}>
+                          <td style={{ padding: '7px 10px', fontWeight: 'bold' }}>
                             {test.score >= 90 ? '🏆 Xuất sắc' : test.score >= 60 ? '🌟 Đạt yêu cầu' : '⚠️ Cần cố gắng'}
                           </td>
                         </tr>
@@ -579,121 +518,136 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Section 4: Detailed Lesson & Activities Breakdown (Selected Lessons ONLY) */}
-              <div className="pdf-section" style={{ marginBottom: '24px' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <BookOpen size={17} color="#059669" /> Chi Tiết Hoạt Động Báo Cáo ({lessonsToExport.length} Buổi Được Chọn)
+              {/* Section 4: Compact Executive Lesson Activity Table */}
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 8px 0', color: '#1e3a8a', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <BookOpen size={16} color="#059669" /> Bảng Chi Tiết Hoạt Động Báo Cáo ({lessonsToExport.length} Buổi Được Chọn)
                 </h3>
                 
                 {lessonsToExport.length === 0 ? (
-                  <div style={{ padding: '16px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', fontSize: '0.88rem', color: '#991b1b', textAlign: 'center', fontWeight: 'bold' }}>
+                  <div style={{ padding: '12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', fontSize: '0.85rem', color: '#991b1b', textAlign: 'center', fontWeight: 'bold' }}>
                     ⚠️ Chưa chọn buổi học nào để xuất báo cáo. Vui lòng tích chọn các buổi học ở khung bên trên.
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {lessonsToExport.map((lesson) => {
-                      const idx = allLessons.findIndex(l => l.id === lesson.id);
-                      const isLessonDone = state.completedLessons.includes(lesson.id);
-                      const doneStages = state.completedStages[lesson.id] || (isLessonDone ? [0, 1, 2, 3] : []);
-                      const staticWords = lesson.words || [];
-                      const customWordsForLesson = state.customWords.filter(w => w.lessonId === lesson.id);
-                      const allLessonWords = [...staticWords, ...customWordsForLesson];
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                    <thead>
+                      <tr style={{ background: '#059669', color: '#ffffff', textAlign: 'left' }}>
+                        <th style={{ padding: '8px 10px', width: '24%', borderRadius: '6px 0 0 6px' }}>Buổi Học & Trạng Thái</th>
+                        <th style={{ padding: '8px 10px', width: '48%' }}>4 Chặng Hoạt Động Chi Tiết</th>
+                        <th style={{ padding: '8px 10px', width: '28%', borderRadius: '0 6px 6px 0' }}>Từ Vựng Trong Bài</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lessonsToExport.map((lesson, idx) => {
+                        const lessonOriginalIdx = allLessons.findIndex(l => l.id === lesson.id);
+                        const isLessonDone = state.completedLessons.includes(lesson.id);
+                        const doneStages = state.completedStages[lesson.id] || (isLessonDone ? [0, 1, 2, 3] : []);
+                        const staticWords = lesson.words || [];
+                        const customWordsForLesson = state.customWords.filter(w => w.lessonId === lesson.id);
+                        const allLessonWords = [...staticWords, ...customWordsForLesson];
 
-                      return (
-                        <div
-                          key={lesson.id}
-                          className="pdf-item"
-                          style={{
-                            background: isLessonDone ? '#ecfdf5' : '#f0f9ff',
-                            border: `1.5px solid ${isLessonDone ? '#a7f3d0' : '#bae6fd'}`,
-                            borderRadius: '12px',
-                            padding: '12px 14px',
-                            fontSize: '0.82rem'
-                          }}
-                        >
-                          {/* Lesson Header Line */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <CheckCircle2 size={18} color={isLessonDone ? '#059669' : '#0284c7'} />
-                              <span style={{ fontWeight: 800, fontSize: '0.92rem', color: isLessonDone ? '#065f46' : '#0369a1' }}>
-                                Buổi {idx + 1}: {lesson.title}
-                              </span>
-                            </div>
-                            <span style={{
-                              padding: '3px 10px',
-                              borderRadius: '12px',
-                              fontSize: '0.75rem',
-                              fontWeight: 'bold',
-                              background: isLessonDone ? '#d1fae5' : '#e0f2fe',
-                              color: isLessonDone ? '#047857' : '#0369a1'
-                            }}>
-                              {isLessonDone ? `✓ Hoàn thành (${doneStages.length}/${lesson.stages.length} chặng)` : `Đang học (${doneStages.length}/${lesson.stages.length} chặng)`}
-                            </span>
-                          </div>
-
-                          {/* Stages Breakdown */}
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '6px', background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                            {lesson.stages.map((stage, stageIdx) => {
-                              const isStageDone = isLessonDone || doneStages.includes(stageIdx);
-                              return (
-                                <div key={stageIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', color: isStageDone ? '#0f766e' : '#64748b' }}>
-                                  <span style={{ color: isStageDone ? '#059669' : '#cbd5e1', fontWeight: 'bold' }}>
-                                    {isStageDone ? '☑' : '▫'}
-                                  </span>
-                                  <div>
-                                    <strong style={{ color: isStageDone ? '#0f766e' : '#475569' }}>{stage.name}:</strong> {stage.desc}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Vocabulary Words (Uniform Styling) */}
-                          {allLessonWords.length > 0 && (
-                            <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                              <strong style={{ color: '#2563eb' }}>🔤 Từ vựng ({allLessonWords.length}):</strong>
-                              {allLessonWords.map((w, wIdx) => (
-                                <span 
-                                  key={wIdx} 
-                                  style={{ 
-                                    background: '#eff6ff', 
-                                    border: '1px solid #bfdbfe', 
-                                    padding: '1px 6px', 
-                                    borderRadius: '6px', 
-                                    color: '#1d4ed8'
-                                  }}
-                                >
-                                  <strong>{w.en}</strong> ({w.vi})
+                        return (
+                          <tr 
+                            key={lesson.id} 
+                            className="pdf-item" 
+                            style={{ 
+                              borderBottom: '1.5px solid #cbd5e1', 
+                              background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' 
+                            }}
+                          >
+                            {/* Col 1: Lesson Header */}
+                            <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
+                              <div style={{ fontWeight: 800, color: '#065f46', fontSize: '0.88rem' }}>
+                                Buổi {lessonOriginalIdx + 1}:
+                              </div>
+                              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.82rem', marginTop: '2px', lineHeight: 1.25 }}>
+                                {lesson.title.includes(':') ? lesson.title.split(':')[1] : lesson.title}
+                              </div>
+                              <div style={{ marginTop: '6px' }}>
+                                <span style={{
+                                  background: isLessonDone ? '#d1fae5' : '#e0f2fe',
+                                  color: isLessonDone ? '#047857' : '#0369a1',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 'bold',
+                                  display: 'inline-block'
+                                }}>
+                                  {isLessonDone ? '✓ Hoàn thành' : 'Đang học'} ({doneStages.length}/4)
                                 </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                              </div>
+                            </td>
+
+                            {/* Col 2: 4 Stages Breakdown */}
+                            <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 8px', fontSize: '0.75rem' }}>
+                                {lesson.stages.map((stage, stageIdx) => {
+                                  const isStageDone = isLessonDone || doneStages.includes(stageIdx);
+                                  return (
+                                    <div key={stageIdx} style={{ lineHeight: 1.25, color: isStageDone ? '#065f46' : '#475569' }}>
+                                      <span style={{ color: isStageDone ? '#059669' : '#cbd5e1', fontWeight: 'bold' }}>
+                                        {isStageDone ? '☑' : '▫'}
+                                      </span>{' '}
+                                      <strong style={{ color: isStageDone ? '#0f766e' : '#334155' }}>{stage.name.split('(')[0]}:</strong>{' '}
+                                      <span style={{ color: '#475569' }}>{stage.desc}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </td>
+
+                            {/* Col 3: Vocabulary Words Tags */}
+                            <td style={{ padding: '10px 8px', verticalAlign: 'top' }}>
+                              {allLessonWords.length === 0 ? (
+                                <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontStyle: 'italic' }}>Chưa có từ vựng</span>
+                              ) : (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 4px' }}>
+                                  {allLessonWords.map((w, wIdx) => (
+                                    <span 
+                                      key={wIdx} 
+                                      style={{ 
+                                        background: '#eff6ff', 
+                                        border: '1px solid #bfdbfe', 
+                                        padding: '1px 5px', 
+                                        borderRadius: '4px', 
+                                        fontSize: '0.72rem', 
+                                        color: '#1d4ed8',
+                                        display: 'inline-block'
+                                      }}
+                                    >
+                                      <b>{w.en}</b> <span style={{ color: '#475569' }}>({w.vi})</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 )}
               </div>
 
               {/* Section 5: Badges / Visual Certificates Cards */}
-              <div className="pdf-section" style={{ marginBottom: '24px' }}>
-                <h3 style={{ margin: '0 0 12px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Award size={17} color="#d81b60" /> {t.pdfBadgesSummary} ({state.badges.length} Phiếu)
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Award size={16} color="#d81b60" /> {t.pdfBadgesSummary} ({state.badges.length} Phiếu)
                 </h3>
 
                 {state.badges.length === 0 ? (
-                  <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.85rem', color: '#64748b' }}>
+                  <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', fontSize: '0.82rem', color: '#64748b' }}>
                     Chưa có phiếu bé ngoan nào được trao.
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'flex-start' }}>
                     {state.badges.map((badge) => (
                       <div
                         key={badge.id}
                         className="pdf-card"
                         style={{
-                          width: '160px',
-                          minHeight: '235px',
+                          width: '155px',
+                          minHeight: '230px',
                           backgroundColor: '#ffffff',
                           background: '#ffffff',
                           borderRadius: '12px',
@@ -730,7 +684,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                         <h4 style={{ 
                           margin: '2px 0 0 0', 
                           color: '#c2185b', 
-                          fontSize: '0.82rem', 
+                          fontSize: '0.8rem', 
                           fontWeight: 900,
                           letterSpacing: '0.2px',
                           textTransform: 'uppercase'
@@ -740,13 +694,13 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
 
                         {/* Student Photo Flower Mascot */}
                         <div style={{ margin: '2px 0' }}>
-                          <BeNgoanFlowerPDF size={80} photoUrl={badge.photoUrl || '/student_photo.png'} />
+                          <BeNgoanFlowerPDF size={76} photoUrl={badge.photoUrl || '/student_photo.png'} />
                         </div>
 
                         {/* Student Name */}
                         <div style={{ 
                           color: '#c2185b', 
-                          fontSize: '1.05rem', 
+                          fontSize: '1rem', 
                           fontWeight: 'bold',
                           fontFamily: '"Dancing Script", "Be Vietnam Pro", cursive, sans-serif',
                           margin: '0 0 2px 0',
@@ -763,7 +717,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                           background: '#ffffff',
                           color: '#111827',
                           fontWeight: 800,
-                          fontSize: '0.7rem',
+                          fontSize: '0.68rem',
                           textAlign: 'center',
                           lineHeight: 1.15,
                           width: '92%'
@@ -783,16 +737,16 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
 
               {/* Section 6: Feedbacks */}
               {state.feedbacks && state.feedbacks.length > 0 && (
-                <div className="pdf-section" style={{ marginBottom: '24px' }}>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: 800 }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <h3 style={{ margin: '0 0 8px 0', color: '#1e3a8a', fontSize: '0.95rem', fontWeight: 800 }}>
                     💬 {t.pdfFeedbacks}
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {state.feedbacks.slice(0, 3).map(fb => (
-                      <div key={fb.id} className="pdf-item" style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '10px', padding: '8px 12px', fontSize: '0.82rem' }}>
+                      <div key={fb.id} className="pdf-item" style={{ background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '8px', padding: '7px 12px', fontSize: '0.8rem' }}>
                         <span style={{ marginRight: '8px' }}>{fb.emoji}</span>
                         <strong>{fb.lessonTitle}:</strong> {fb.note}
-                        <span style={{ float: 'right', color: '#8c8c8c', fontSize: '0.75rem' }}>{fb.date}</span>
+                        <span style={{ float: 'right', color: '#8c8c8c', fontSize: '0.72rem' }}>{fb.date}</span>
                       </div>
                     ))}
                   </div>
@@ -800,24 +754,24 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
               )}
 
               {/* Section 7: Official Sign-off Footer */}
-              <div className="pdf-section" style={{
-                marginTop: '36px',
-                paddingTop: '16px',
+              <div className="pdf-item" style={{
+                marginTop: '28px',
+                paddingTop: '14px',
                 borderTop: '2px dashed #cbd5e1',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
                 textAlign: 'center',
-                fontSize: '0.88rem'
+                fontSize: '0.85rem'
               }}>
                 <div>
                   <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{t.pdfParentSign}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
-                  <div style={{ height: '45px' }}></div>
+                  <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
+                  <div style={{ height: '40px' }}></div>
                 </div>
                 <div>
                   <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{t.pdfTeacherSign}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
-                  <div style={{ height: '45px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', color: '#2563eb', fontWeight: 800, fontFamily: 'cursive' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
+                  <div style={{ height: '40px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', color: '#2563eb', fontWeight: 800, fontFamily: 'cursive' }}>
                     {state.profile.teacherName || 'Cô Giáo'}
                   </div>
                 </div>
