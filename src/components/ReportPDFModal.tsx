@@ -545,7 +545,7 @@ const ReportPDFModal: React.FC<ReportPDFModalProps> = ({ isOpen, onClose }) => {
                           <td style={{ padding: '8px 10px', fontWeight: 'bold', color: '#1e293b' }}>{test.name}</td>
                           <td style={{ padding: '8px 10px', color: '#64748b' }}>{test.date}</td>
                           <td style={{ padding: '8px 10px', fontWeight: 900, color: test.score >= 90 ? '#059669' : test.score >= 60 ? '#2563eb' : '#dc2626' }}>
-                            {test.score} / 100
+                            {test.score}/100đ ({test.accuracyPercent ?? test.score}% câu đúng)
                           </td>
                           <td style={{ padding: '8px 10px', fontWeight: 'bold' }}>
                             {test.score >= 90 ? '🏆 Xuất sắc' : test.score >= 60 ? '🌟 Đạt yêu cầu' : '⚠️ Cần cố gắng'}

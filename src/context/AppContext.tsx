@@ -28,6 +28,7 @@ export interface TestData {
   date: string;
   link: string;
   status: 'pending' | 'completed';
+  accuracyPercent?: number;
 }
 
 export interface CustomWord {
@@ -92,7 +93,7 @@ interface AppContextType {
   deleteFeedback: (fbId: string) => void;
   addTest: (test: TestData) => void;
   deleteTest: (testId: string) => void;
-  updateTestStatus: (testId: string, score: number) => void;
+  updateTestStatus: (testId: string, score: number, accuracyPercent?: number) => void;
   addCustomWord: (word: CustomWord) => void;
   updateStage: (weekId: number, lessonId: number, stageIdx: number, newStage: any) => void;
   addStage: (weekId: number, lessonId: number, newStage: any) => void;
@@ -240,14 +241,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const setHeroMood = (mood: HeroMood) => setState(p => ({ ...p, heroMood: mood }));
 
-  const updateTestStatus = (testId: string, score: number) => setState(p => {
+  const updateTestStatus = (testId: string, score: number, accuracyPercent?: number) => setState(p => {
     let newMood: HeroMood = 'happy';
+    const percent = accuracyPercent !== undefined ? accuracyPercent : score;
     if (score < 60) {
       newMood = 'crying';
-      setTimeout(() => alert(`😭 Ôi không! Bé chỉ đạt ${score} điểm. Mèo Cam đang khóc nhè vì điểm thấp này! Hãy làm lại bài để Mèo Cam vui lại nhé!`), 400);
+      setTimeout(() => alert(`😭 Ôi không! Bé đạt ${percent}% câu đúng (${score} điểm). Mèo Cam đang khóc nhè vì điểm thấp này! Hãy làm lại bài để Mèo Cam vui lại nhé!`), 400);
     } else if (score >= 90) {
       newMood = 'victory';
-      setTimeout(() => alert(`🏆 Tuyệt vời! ${score} điểm! Mèo Cam vô cùng tự hào và ăn mừng chiến thắng cùng bé!`), 400);
+      setTimeout(() => alert(`🏆 Tuyệt vời! Bé đạt ${percent}% câu đúng (${score} điểm)! Mèo Cam vô cùng tự hào và ăn mừng chiến thắng cùng bé!`), 400);
     } else {
       newMood = 'happy';
     }
@@ -256,7 +258,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...p,
       heroMood: newMood,
       lastTestScore: score,
-      tests: p.tests.map(t => t.id === testId ? { ...t, status: 'completed', score } : t),
+      tests: p.tests.map(t => t.id === testId ? { ...t, status: 'completed', score, accuracyPercent: percent } : t),
       stars: p.stars + (score >= 60 ? 10 : 2),
       fish: p.fish + (score >= 60 ? 5 : 1),
       catExp: p.catExp + (score >= 60 ? 50 : 10)
